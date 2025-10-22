@@ -5,7 +5,7 @@ CXXFLAGS_DEBUG := -ansi -pedantic -Wall -std=c18 -g -DMAP
 TARGET := Awale
 BUILD_DIR := build
 
-SOURCES = gameLogic.c gameUtils.c #gameServer.c client.c server.c ihm.c
+SOURCES = gameLogic.c gameUtils.c ihm.c #gameServer.c client.c server.c
 OBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 
 all: $(TARGET)

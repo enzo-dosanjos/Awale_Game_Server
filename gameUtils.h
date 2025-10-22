@@ -1,6 +1,6 @@
 typedef struct {
     int** grid;
-    int rotation;
+    int rotation;  // 0 pour horaire, 1 pour antihoraire
     int* scores;
 } Game;
 

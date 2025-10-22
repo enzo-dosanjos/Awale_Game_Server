@@ -1,6 +1,5 @@
 #include "gameLogic.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 
 int**  initGrid () {
@@ -22,15 +21,18 @@ int**  initGrid () {
     return grid;
 }
 
-void printGrid (Game game) {
+Game startGame (int rotation) {
+    Game game;
+    game.grid = initGrid();
+    game.rotation = rotation;
+    game.scores = malloc(NUM_PLAYERS * sizeof(int));
     for (int i = 0; i < NUM_PLAYERS; i++) {
-        for (int j = 0; j < NUM_HOUSES; j++) {
-            printf("%d ", game.grid[i][j]);
-        }
-        printf("\n");
+        game.scores[i] = 0;
     }
-}
 
+    return game;
+
+}
 
 int play (Game game, Move move) {
     int *gameGrid = &game.grid[0][0];
@@ -57,22 +59,21 @@ int play (Game game, Move move) {
 }
 
 int main() {
-    Game game;
-    game.scores = malloc(NUM_PLAYERS * sizeof(int));
-    for (int i =  0; i < NUM_PLAYERS; i++) {
-        game.scores[i] = 0;
-    }
-    game.grid = initGrid();
-
-    printGrid(game);
+    int rotation = 1;  // 0 or 1
+    Game game = startGame(rotation);
 
     Move move;
     move.numPlayer = 1;
     move.houseNum = 5;
 
+    // dans la future fonction play
+    if (game.rotation == 0) {
+        move.houseNum = (NUM_HOUSES - 1) - move.houseNum;
+    }
+
     play(game, move);
 
-    printGrid(game);
+    printGrid(game, NUM_HOUSES, NUM_PLAYERS);
 
     return 0;
 }
