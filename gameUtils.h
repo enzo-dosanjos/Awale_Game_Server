@@ -6,5 +6,5 @@ typedef struct {
 
 typedef struct {
     int numPlayer;
-    int houseNumber;
+    int houseNum;
 } Move;
