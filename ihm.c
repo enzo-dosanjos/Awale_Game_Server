@@ -15,3 +15,17 @@ void printGrid (Game game, int gridX, int gridY) {
         printf("\n");
     }
 }
+
+void printGameEnd(Game game, int numPlayers, int winner) {
+    printf("\n=== GAME OVER ===\n");
+    printf("Final Scores:\n");
+    for (int i = 0; i < numPlayers; i++) {
+        printf("Player %d: %d\n", i + 1, game.scores[i]);
+    }
+
+    if (winner >= 0) {
+        printf("Player %d wins!\n", winner + 1);
+    } else {
+        printf("It’s a draw!\n");
+    }
+}

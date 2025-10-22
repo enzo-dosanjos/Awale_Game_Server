@@ -55,12 +55,43 @@ int play (Game game, Move move) {
         i--;
     }
 
+    // Ajouter le saut de la douzième case
+
     return 1;
 }
 
+int endGame (Game game) {
+    // Collect remaining seeds
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        for (int j = 0; j < NUM_HOUSES; j++) {
+            game.scores[i] += game.grid[i][j];
+            game.grid[i][j] = 0;
+        }
+    }
+
+    // Determine winner
+    int maxScore = -1;
+    int winner = -1;
+    int draw = 0;
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        printf("%d\n", game.scores[i]);
+        if (game.scores[i] > maxScore) {
+            maxScore = game.scores[i];
+            winner = i;
+            draw = 0;
+        } else if (game.scores[i] == maxScore) {
+            draw = 1;
+        }
+    }
+
+    return draw ? -1 : winner;
+}
+
 int main() {
-    int rotation = 1;  // 0 or 1
+    int rotation = 1;  // 0 for clockwise, 1 for counter-clockwise
     Game game = startGame(rotation);
+
+    // while (not isGameOver(game)) {
 
     Move move;
     move.numPlayer = 1;
@@ -74,6 +105,11 @@ int main() {
     play(game, move);
 
     printGrid(game, NUM_HOUSES, NUM_PLAYERS);
+
+    int winner = endGame(game);
+    printGameEnd(game, NUM_PLAYERS, winner);
+
+    freeGame(game);
 
     return 0;
 }
