@@ -108,11 +108,14 @@ void makeAMove(Game game, Move move, int capturesOk, int nbPlayers, int nbHouses
 
     gameGrid[houseInd] = 0;
 
-    // Ajouter le saut de la douzième case
     int i;
-    for (i = houseInd + 1; i < houseInd + 1 + numSeeds; i++)
+    int skip = numSeeds / (nbHouses * nbPlayers);
+    for (i = houseInd + 1; i < houseInd + 1 + numSeeds + skip; i++)
     {
-        gameGrid[i % (nbHouses * nbPlayers)]++;
+        if (i % (nbHouses * nbPlayers) != houseInd)
+        {
+            gameGrid[i % (nbHouses * nbPlayers)]++;
+        }
     }
 
     if (capturesOk)
