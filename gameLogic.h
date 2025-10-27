@@ -1,7 +1,6 @@
 #include "ihm.h"
 #include "constants.h"
-
-int**  initGrid ();
+#include <stdlib.h>
 
 Game startGame (int rotation);
 
