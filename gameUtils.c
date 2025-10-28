@@ -122,7 +122,7 @@ void makeAMove(Game game, Move move, int capturesOk, int nbPlayers, int nbHouses
     {
         i = (i - 1) % (nbHouses * nbPlayers);
 
-        while ((gameGrid[i] == 2 || gameGrid[i] == 3) & (i % nbHouses != move.numPlayer))
+        while ((gameGrid[i] == 2 || gameGrid[i] == 3) & (i / nbHouses != move.numPlayer))
         {
             game.scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
