@@ -1,3 +1,8 @@
-const int NUM_HOUSES = 6;
-const int NUM_SEEDS = 48;
-const int NUM_PLAYERS = 2;
+#ifndef AWALE_GAME_SERVER_CONSTANTS_H
+#define AWALE_GAME_SERVER_CONSTANTS_H
+
+#define NUM_HOUSES 6
+#define NUM_SEEDS 48
+#define NUM_PLAYERS 2
+
+#endif //AWALE_GAME_SERVER_CONSTANTS_H

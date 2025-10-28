@@ -1,7 +1,3 @@
-//
-// Created by enzo on 28/10/2025.
-//
-
 #ifndef AWALE_GAME_SERVER_GAMESERVER_H
 #define AWALE_GAME_SERVER_GAMESERVER_H
 
@@ -10,11 +6,12 @@
 
 #include <winsock2.h>
 
-#elif defined (linux)
+#else
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
 #include <unistd.h> /* close */
 #include <netdb.h> /* gethostbyname */
@@ -26,10 +23,6 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
-#else
-
-#error not defined for this platform
-
 #endif
 
 #define CRLF        "\r\n"
@@ -38,18 +31,23 @@ typedef struct in_addr IN_ADDR;
 
 #define BUF_SIZE    1024
 
-#include "client.h"
 
-static void init(void);
-static void end(void);
-static void app(void);
-static int init_connection(void);
-static void end_connection(int sock);
-static int read_client(SOCKET sock, char *buffer);
-static void write_client(SOCKET sock, const char *buffer);
-static void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
-static void remove_client(Client *clients, int to_remove, int *actual);
-static void clear_clients(Client *clients, int actual);
+typedef struct
+{
+    SOCKET sock;
+    char name[BUF_SIZE];
+} Client;
+
+void initServer(void);
+void endServer(void);
+void appServer(void);
+int init_connectionServer(void);
+void end_connection(int sock);
+int read_client(SOCKET sock, char *buffer);
+void write_client(SOCKET sock, const char *buffer);
+void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
+void remove_client(Client *clients, int to_remove, int *actual);
+void clear_clients(Client *clients, int actual);
 
 
 #endif //AWALE_GAME_SERVER_GAMESERVER_H

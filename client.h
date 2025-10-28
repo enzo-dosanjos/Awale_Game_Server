@@ -1,7 +1,3 @@
-//
-// Created by enzo on 28/10/2025.
-//
-
 #ifndef AWALE_GAME_SERVER_CLIENT_H
 #define AWALE_GAME_SERVER_CLIENT_H
 
@@ -9,11 +5,12 @@
 
 #include <winsock2.h>
 
-#elif defined (linux)
+#else
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
 #include <unistd.h> /* close */
 #include <netdb.h> /* gethostbyname */
@@ -25,10 +22,6 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
-#else
-
-#error not defined for this platform
-
 #endif
 
 #define CRLF     "\r\n"
@@ -36,18 +29,12 @@ typedef struct in_addr IN_ADDR;
 
 #define BUF_SIZE 1024
 
-typedef struct
-{
-    SOCKET sock;
-    char name[BUF_SIZE];
-} Client;
-
-static void init(void);
-static void end(void);
-static void app(const char *address, const char *name);
-static int init_connection(const char *address);
-static void end_connection(int sock);
-static int read_server(SOCKET sock, char *buffer);
-static void write_server(SOCKET sock, const char *buffer);
+void initClient(void);
+void endClient(void);
+void appClient(const char *address, const char *name);
+int init_connectionClient(const char *address);
+void end_connection(int sock);
+int read_server(SOCKET sock, char *buffer);
+void write_server(SOCKET sock, const char *buffer);
 
 #endif //AWALE_GAME_SERVER_CLIENT_H

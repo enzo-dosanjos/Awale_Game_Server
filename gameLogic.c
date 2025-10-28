@@ -14,7 +14,7 @@ Game startGame (int rotation) {
     return game;
 }
 
-int play (Game game, Move move) {
+int playMove (Game game, Move move) {
     if (game.rotation == 0 && move.numPlayer == 0) {
         move.houseNum = (NUM_HOUSES - 1) - move.houseNum;
     } else if (game.rotation == 1 && move.numPlayer == 1) {
@@ -61,7 +61,7 @@ int endGame (Game game) {
     return draw ? -1 : winner;
 }
 
-int main() {
+int playGame() {
     int rotation = 0;  // 0 for counter-clockwise, 1 for clockwise
     printf("Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
     scanf("%d", &(rotation));
@@ -75,7 +75,7 @@ int main() {
         printf("Player %d, enter your move (house number 0-%d): ", currentPlayer, NUM_HOUSES - 1);
         scanf("%d", &(move.houseNum));
 
-        while (!play(game, move)) {
+        while (!playMove(game, move)) {
             printf("Illegal move. Player %d, enter your move (house number 0-%d): ", currentPlayer, NUM_HOUSES - 1);
             scanf("%d", &(move.houseNum));
         }

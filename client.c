@@ -5,7 +5,7 @@
 
 #include "client.h"
 
-static void init(void)
+void initClient(void)
 {
 #ifdef WIN32
    WSADATA wsa;
@@ -18,16 +18,16 @@ static void init(void)
 #endif
 }
 
-static void end(void)
+void endClient(void)
 {
 #ifdef WIN32
    WSACleanup();
 #endif
 }
 
-static void app(const char *address, const char *name)
+void appClient(const char *address, const char *name)
 {
-   SOCKET sock = init_connection(address);
+   SOCKET sock = init_connectionClient(address);
    char buffer[BUF_SIZE];
 
    fd_set rdfs;
@@ -86,7 +86,7 @@ static void app(const char *address, const char *name)
    end_connection(sock);
 }
 
-static int init_connection(const char *address)
+int init_connectionClient(const char *address)
 {
    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
    SOCKADDR_IN sin = { 0 };
@@ -105,7 +105,7 @@ static int init_connection(const char *address)
       exit(EXIT_FAILURE);
    }
 
-   sin.sin_addr = *(IN_ADDR *) hostinfo->h_addr;
+   sin.sin_addr = *(IN_ADDR *) hostinfo->h_addr_list[0];
    sin.sin_port = htons(PORT);
    sin.sin_family = AF_INET;
 
@@ -118,12 +118,12 @@ static int init_connection(const char *address)
    return sock;
 }
 
-static void end_connection(int sock)
+void end_connection(int sock)
 {
    closesocket(sock);
 }
 
-static int read_server(SOCKET sock, char *buffer)
+int read_server(SOCKET sock, char *buffer)
 {
    int n = 0;
 
@@ -138,11 +138,28 @@ static int read_server(SOCKET sock, char *buffer)
    return n;
 }
 
-static void write_server(SOCKET sock, const char *buffer)
+void write_server(SOCKET sock, const char *buffer)
 {
    if(send(sock, buffer, strlen(buffer), 0) < 0)
    {
       perror("send()");
       exit(errno);
    }
+}
+
+int main(int argc, char **argv)
+{
+   if(argc < 2)
+   {
+      printf("Usage : %s [address] [pseudo]\n", argv[0]);
+      return EXIT_FAILURE;
+   }
+
+   initClient();
+
+   appClient(argv[1], argv[2]);
+
+   endClient();
+
+   return EXIT_SUCCESS;
 }
