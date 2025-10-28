@@ -1,5 +1,7 @@
 #include "gameLogic.h"
 
+#include <stdio.h>
+
 Game startGame (int rotation) {
     Game game;
     game.grid = initGrid(NUM_PLAYERS, NUM_HOUSES, NUM_SEEDS);
@@ -10,11 +12,12 @@ Game startGame (int rotation) {
     }
 
     return game;
-
 }
 
 int play (Game game, Move move) {
-    if (game.rotation == 0) {
+    if (game.rotation == 0 && move.numPlayer == 0) {
+        move.houseNum = (NUM_HOUSES - 1) - move.houseNum;
+    } else if (game.rotation == 1 && move.numPlayer == 1) {
         move.houseNum = (NUM_HOUSES - 1) - move.houseNum;
     }
 
@@ -59,18 +62,28 @@ int endGame (Game game) {
 }
 
 int main() {
-    int rotation = 1;  // 0 for clockwise, 1 for counter-clockwise
+    int rotation = 0;  // 0 for counter-clockwise, 1 for clockwise
+    printf("Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
+    scanf("%d", &(rotation));
+    int currentPlayer = 0;
     Game game = startGame(rotation);
 
-    // while (not isGameOver(game)) {
+    while (isGameOver(game, NUM_PLAYERS, NUM_HOUSES)) {
+        Move move;
+        move.numPlayer = currentPlayer;
 
-    Move move;
-    move.numPlayer = 1;
-    move.houseNum = 5;
+        printf("Player %d, enter your move (house number 0-%d): ", currentPlayer, NUM_HOUSES - 1);
+        scanf("%d", &(move.houseNum));
 
-    play(game, move);
+        while (!play(game, move)) {
+            printf("Illegal move. Player %d, enter your move (house number 0-%d): ", currentPlayer, NUM_HOUSES - 1);
+            scanf("%d", &(move.houseNum));
+        }
 
-    printGrid(game, NUM_HOUSES, NUM_PLAYERS);
+        printGrid(game, NUM_HOUSES, NUM_PLAYERS);
+
+        currentPlayer = nextPlayer(currentPlayer);
+    }
 
     int winner = endGame(game);
     printGameEnd(game, NUM_PLAYERS, winner);

@@ -3,11 +3,11 @@
 
 void printGrid (Game game, int gridX, int gridY) {
     for (int i = 0; i < gridY; i++) {
-        if (i > 0 || i > gridY - 2) {  // handle rotation
+        if ((game.rotation == 0 && i == 0) || (game.rotation == 1 && i > 0)) {
             for (int j = gridX - 1; j >= 0; j--) {
                 printf("%d ", game.grid[i][j]);
             }
-        } else {
+        } else if ((game.rotation == 0 && i > 0) || (game.rotation == 1 && i == 0)) {
             for (int j = 0; j < gridX; j++) {
                 printf("%d ", game.grid[i][j]);
             }
