@@ -126,7 +126,7 @@ void makeAMove(Game game, Move move, int capturesOk, int nbPlayers, int nbHouses
         {
             game.scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
-            i--;
+            i -= 1;
         }
     }
 }
