@@ -25,6 +25,9 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
+#include "constants.h"
+#include "gameLogic.h"
+
 #define CRLF        "\r\n"
 #define PORT         1977
 #define MAX_CLIENTS     100
@@ -35,8 +38,19 @@ typedef struct in_addr IN_ADDR;
 typedef struct
 {
     SOCKET sock;
-    char name[BUF_SIZE];
+    char username[BUF_SIZE];
+    char bio[BUF_SIZE];
+    int private;
+    int gameId;
 } Client;
+
+typedef struct
+{
+    int id;
+    Client players[NUM_PLAYERS];
+    Game game;
+    int currentPlayer;
+} GameSession;
 
 void initServer(void);
 void endServer(void);
@@ -46,6 +60,8 @@ void end_connection(int sock);
 int read_client(SOCKET sock, char *buffer);
 void write_client(SOCKET sock, const char *buffer);
 void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
+Client *findClientByUsername(Client *clients, int actual, char username[]);
+void sendMessageToClient(Client *clients, int actual, char username[], const char *buffer);
 void remove_client(Client *clients, int to_remove, int *actual);
 void clear_clients(Client *clients, int actual);
 

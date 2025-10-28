@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "gameServer.h"
-#include "client.h"
+#include "commands.h"
 
 void initServer(void)
 {
@@ -92,7 +92,7 @@ void appServer(void)
          FD_SET(csock, &rdfs);
 
          Client c = { csock };
-         strncpy(c.name, buffer, BUF_SIZE - 1);
+         strncpy(c.username, buffer, BUF_SIZE - 1);
          clients[actual] = c;
          actual++;
       }
@@ -111,13 +111,20 @@ void appServer(void)
                {
                   closesocket(clients[i].sock);
                   remove_client(clients, i, &actual);
-                  strncpy(buffer, client.name, BUF_SIZE - 1);
+                  strncpy(buffer, client.username, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                   send_message_to_all_clients(clients, client, actual, buffer, 1);
                }
                else
                {
-                  send_message_to_all_clients(clients, client, actual, buffer, 0);
+                  char *command = strtok(buffer, " ");
+                  if (strcmp(command, "CHALLENGE") == 0) {
+                     char *username = strtok(NULL, " ");
+                     challenge(clients, client, actual, username);
+                  } else if (strcmp(command, "ACCEPT") == 0) {
+                     char *username = strtok(NULL, " ");
+                     acceptChallenge(clients, client, actual, username);
+                  }
                }
                break;
             }
@@ -158,12 +165,32 @@ void send_message_to_all_clients(Client *clients, Client sender, int actual, con
       {
          if(from_server == 0)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
+            strncpy(message, sender.username, BUF_SIZE - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
          write_client(clients[i].sock, message);
       }
+   }
+}
+
+Client *findClientByUsername(Client *clients, int actual, char username[])
+{
+   for (int i = 0; i < actual; i++)
+   {
+      if (strcmp(clients[i].username, username) == 0)
+      {
+         return &clients[i];
+      }
+   }
+   return NULL; // Not found
+}
+
+void sendMessageToClient(Client *clients, int actual, char username[], const char *buffer)
+{
+   Client *client = findClientByUsername(clients, actual, username);
+   if (client != NULL) {
+         write_client(client->sock, buffer);
    }
 }
 
@@ -226,3 +253,4 @@ void write_client(SOCKET sock, const char *buffer)
       exit(errno);
    }
 }
+
