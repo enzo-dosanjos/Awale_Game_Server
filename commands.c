@@ -48,7 +48,7 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
 
 void listClients(Client *clients, int actual, Client requester) {
     char message[BUF_SIZE];
-    message[0] = 0;
+    message[0] = '\0';
     strncat(message, "Connected users:\n", BUF_SIZE - strlen(message) - 1);
 
     // Find the maximum username length for formatting
@@ -78,6 +78,26 @@ void listClients(Client *clients, int actual, Client requester) {
         }
 
         strncat(message, "\n",   BUF_SIZE - strlen(message) - 1);
+    }
+    write_client(requester.sock, message);
+}
+
+void listGames(GameSession *gameSessions, int actualGame, Client requester) {
+    char message[BUF_SIZE];
+    message[0] = '\0';
+
+    if (actualGame == 0) {
+        strncat(message, "No ongoing games.\n", BUF_SIZE - strlen(message) - 1);
+    } else {
+        strncat(message, "Ongoing games:\n", BUF_SIZE - strlen(message) - 1);
+        for (int i = 0; i < actualGame; i++) {
+            char gameInfo[BUF_SIZE];
+            snprintf(gameInfo, BUF_SIZE, "Game ID: %d | Players: %s vs %s\n",
+                     gameSessions[i].id,
+                     gameSessions[i].players[0].username,
+                     gameSessions[i].players[1].username);
+            strncat(message, gameInfo, BUF_SIZE - strlen(message) - 1);
+        }
     }
     write_client(requester.sock, message);
 }

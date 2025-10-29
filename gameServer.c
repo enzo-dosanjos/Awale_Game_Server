@@ -33,6 +33,7 @@ void appServer(void)
    /* the index for the array */
    int actual = 0;
    int max = sock;
+   int actualGame = 0;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
    GameSession gameSessions[MAX_CLIENTS / 2];
@@ -126,10 +127,13 @@ void appServer(void)
                      char *username = strtok(NULL, " ");
                      GameSession newGameSession;
                      if (acceptChallenge(clients, client, actual, username, &newGameSession)) {
-                        gameSessions[actual / 2 - 1] = newGameSession;
+                        gameSessions[actualGame] = newGameSession;
+                        actualGame++;
                      }
                   } else if (strcmp(command, "LIST") == 0) {
                      listClients(clients, actual, *client);
+                  } else if (strcmp(command, "LISTGAMES") == 0) {
+                     listGames(gameSessions, actualGame, *client);
                   }
                }
                break;

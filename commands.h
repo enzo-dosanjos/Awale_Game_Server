@@ -10,4 +10,6 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
 
 void listClients(Client *clients, int actual, Client requester);
 
+void listGames(GameSession *gameSessions, int actualGame, Client requester);
+
 #endif //AWALE_GAME_SERVER_COMMANDS_H
