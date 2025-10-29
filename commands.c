@@ -4,15 +4,56 @@
 #include <string.h>
 #include <time.h>
 
-int challenge(Client *clients, Client challenger, int actual, char username[]) {
+int challenge(Client *clients, Client *challenger, int actual, char username[]) {
+    if (challenger->numPendingChallenges >= MAX_PENDING_CHALLENGES) {
+        char msg[] = "Error: You have reached the maximum number of pending challenges. Please wait for one to be accepted.";
+        write_client(challenger->sock, msg);
+        return 0;
+    }
+
+    if (strcmp(challenger->username, username) == 0) {
+        char msg[] = "Error: You cannot challenge yourself.";
+        write_client(challenger->sock, msg);
+        return 0;
+    }
+
     char message[BUF_SIZE];
-    snprintf(message, BUF_SIZE, "CHALLENGE_FROM %s", challenger.username);
+    snprintf(message, BUF_SIZE, "CHALLENGE_FROM %s", challenger->username);
     sendMessageToClient(clients, actual, username, message);
+
+    strcpy(challenger->pendingChallenges[challenger->numPendingChallenges], username);
+    challenger->numPendingChallenges++;
 
     return 1;
 }
 
 int acceptChallenge(Client *clients, Client *client, int actual, char challenger[], GameSession *gameSession) {
+    Client *challengerClient = findClientByUsername(clients, actual, challenger);
+    if (challengerClient == NULL) {
+        // challenger not found
+        char msg[] = "Error : challenger not found";
+        write_client(client->sock, msg);
+        return 0;
+    }
+
+    // Check if there is a pending challenge from the challenger
+    int found = 0;
+    for (int i = 0; i < challengerClient->numPendingChallenges; i++) {
+        if (strcmp(challengerClient->pendingChallenges[i], client->username) == 0) {
+            found = 1;
+            // Remove all pending challenges from the challenger and the client
+            challengerClient->numPendingChallenges = 0;
+            client->numPendingChallenges = 0;
+            break;
+        }
+    }
+
+    if (!found) {
+        char msg[] = "Error: No pending challenge from that user.";
+        write_client(client->sock, msg);
+        return 0;
+    }
+
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
     sendMessageToClient(clients, actual, challenger, message);
@@ -29,13 +70,6 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     gameSession->game = game;
     gameSession->currentPlayer = 0;
 
-    Client *challengerClient = findClientByUsername(clients, actual, challenger);
-    if (challengerClient == NULL) {
-        // challenger not found
-        char msg[] = "Error : challenger not found";
-        write_client(client->sock, msg);
-        return 0;
-    }
     gameSession->players[0] = *challengerClient;
     gameSession->players[1] = *client;
     gameSession->id = (int) time(NULL);  // timestamp

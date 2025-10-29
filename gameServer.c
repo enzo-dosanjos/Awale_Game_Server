@@ -93,8 +93,12 @@ void appServer(void)
 
          FD_SET(csock, &rdfs);
 
-         Client c = { csock };
+         Client c;
+         c.sock = csock;
          strncpy(c.username, buffer, BUF_SIZE - 1);
+         c.gameId = NULL;
+         c.numPendingChallenges = 0;
+         c.private = 0;
          clients[actual] = c;
          actual++;
       }
@@ -122,7 +126,7 @@ void appServer(void)
                   char *command = strtok(buffer, " ");
                   if (strcmp(command, "CHALLENGE") == 0) {
                      char *username = strtok(NULL, " ");
-                     challenge(clients, *client, actual, username);
+                     challenge(clients, client, actual, username);
                   } else if (strcmp(command, "ACCEPT") == 0) {
                      char *username = strtok(NULL, " ");
                      GameSession newGameSession;

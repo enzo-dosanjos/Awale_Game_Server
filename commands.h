@@ -4,7 +4,7 @@
 #include "gameLogic.h"
 #include "gameServer.h"
 
-int challenge(Client *clients, Client challenger, int actual, char username[]);
+int challenge(Client *clients, Client *challenger, int actual, char username[]);
 
 int acceptChallenge(Client *clients, Client *client, int actual, char challenger[], GameSession *gameSession);
 

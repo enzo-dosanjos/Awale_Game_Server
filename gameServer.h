@@ -34,6 +34,8 @@ typedef struct in_addr IN_ADDR;
 
 #define BUF_SIZE    1024
 
+#define MAX_PENDING_CHALLENGES 10
+
 
 typedef struct
 {
@@ -42,6 +44,8 @@ typedef struct
     char bio[BUF_SIZE];
     int private;
     int *gameId;
+    int numPendingChallenges;
+    char pendingChallenges[BUF_SIZE][MAX_PENDING_CHALLENGES];
 } Client;
 
 typedef struct
