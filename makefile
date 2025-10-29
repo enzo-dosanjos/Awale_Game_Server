@@ -12,7 +12,7 @@ CLIENTSOURCES = client.c
 SERVOBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(SERVSOURCES))
 CLIENTOBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CLIENTSOURCES))
 
-all: $(TARGET)
+all: clean $(TARGET)
 server: $(ServTARGET)
 client: $(ClientTARGET)
 

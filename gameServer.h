@@ -41,7 +41,7 @@ typedef struct
     char username[BUF_SIZE];
     char bio[BUF_SIZE];
     int private;
-    int gameId;
+    int *gameId;
 } Client;
 
 typedef struct

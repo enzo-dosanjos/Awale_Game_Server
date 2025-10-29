@@ -4,8 +4,10 @@
 #include "gameLogic.h"
 #include "gameServer.h"
 
-void challenge(Client *clients, Client challenger, int actual, char username[]);
+int challenge(Client *clients, Client challenger, int actual, char username[]);
 
-GameSession acceptChallenge(Client *clients, Client challenger, int actual, char username[]);
+int acceptChallenge(Client *clients, Client *client, int actual, char challenger[], GameSession *gameSession);
+
+void listClients(Client *clients, int actual, Client requester);
 
 #endif //AWALE_GAME_SERVER_COMMANDS_H

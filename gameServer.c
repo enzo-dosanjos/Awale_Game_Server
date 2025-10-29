@@ -35,6 +35,7 @@ void appServer(void)
    int max = sock;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
+   GameSession gameSessions[MAX_CLIENTS / 2];
 
    fd_set rdfs;
 
@@ -104,26 +105,31 @@ void appServer(void)
             /* a client is talking */
             if(FD_ISSET(clients[i].sock, &rdfs))
             {
-               Client client = clients[i];
+               Client *client = &clients[i];
                int c = read_client(clients[i].sock, buffer);
                /* client disconnected */
                if(c == 0)
                {
                   closesocket(clients[i].sock);
                   remove_client(clients, i, &actual);
-                  strncpy(buffer, client.username, BUF_SIZE - 1);
+                  strncpy(buffer, client->username, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  send_message_to_all_clients(clients, client, actual, buffer, 1);
+                  send_message_to_all_clients(clients, *client, actual, buffer, 1);
                }
                else
                {
                   char *command = strtok(buffer, " ");
                   if (strcmp(command, "CHALLENGE") == 0) {
                      char *username = strtok(NULL, " ");
-                     challenge(clients, client, actual, username);
+                     challenge(clients, *client, actual, username);
                   } else if (strcmp(command, "ACCEPT") == 0) {
                      char *username = strtok(NULL, " ");
-                     acceptChallenge(clients, client, actual, username);
+                     GameSession newGameSession;
+                     if (acceptChallenge(clients, client, actual, username, &newGameSession)) {
+                        gameSessions[actual / 2 - 1] = newGameSession;
+                     }
+                  } else if (strcmp(command, "LIST") == 0) {
+                     listClients(clients, actual, *client);
                   }
                }
                break;
