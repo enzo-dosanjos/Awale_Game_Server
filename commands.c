@@ -36,20 +36,14 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
         return 0;
     }
 
-    // Check if there is a pending challenge from the challenger
-    int found = 0;
-    for (int i = 0; i < challengerClient->numPendingChallenges; i++) {
-        if (strcmp(challengerClient->pendingChallenges[i], client->username) == 0) {
-            found = 1;
-            // Remove all pending challenges from the challenger and the client
-            challengerClient->numPendingChallenges = 0;
-            client->numPendingChallenges = 0;
-            break;
-        }
+    if (client->gameId != NULL) {
+        char msg[] = "Error: You are already in a game.";
+        write_client(client->sock, msg);
+        return 0;
     }
 
-    if (!found) {
-        char msg[] = "Error: No pending challenge from that user.";
+    if (challengerClient->gameId != NULL) {
+        char msg[] = "Error: Challenger is already in a game.";
         write_client(client->sock, msg);
         return 0;
     }
