@@ -220,3 +220,76 @@ void sendMP(Client *clients, int actual, char *username, char *message) {
         write_client(client->sock, message);
     }
 }
+
+void updateBio(Client *client, char bio[]) {
+    strncpy(client->bio, bio, BUF_SIZE - 1);
+    char msg[] = "Bio updated successfully.";
+    write_client(client->sock, msg);
+}
+
+int showBio(Client *clients, int actual, Client *requester, char username[]) {
+    Client *client;
+    if (username == NULL || strlen(username) == 0) {
+        client = requester;
+    } else {
+        client = findClientByUsername(clients, actual, username);
+        if (client == NULL) {
+            char msg[] = "Error: User not found.";
+            write_client(requester->sock, msg);
+            return 0;
+        }
+
+        if (client->private) {
+            // check if requester is a friend
+            int found = 0;
+            for (int i = 0; i < client->numFriends; i++) {
+                if (strcmp(client->friends[i], requester->username) == 0) {
+                    found = 1;
+                    break;
+                }
+            }
+
+            if (!found) {
+                char msg[] = "Error: This user's bio is private.";
+                write_client(requester->sock, msg);
+                return 0;
+            }
+        }
+    }
+
+    char message[BUF_SIZE];
+    snprintf(message, BUF_SIZE, "Bio of %s:\n%s", client->username, client->bio);
+    write_client(requester->sock, message);
+    return 1;
+}
+
+int addFriend(Client *client, char username[]) {
+    // doesn't check if user exists so that a disconnected user can still be added as a friend
+
+    // check if already friends
+    for (int i = 0; i < client->numFriends; i++) {
+        if (strcmp(client->friends[i], username) == 0) {
+            char msg[] = "Error: This user is already your friend.";
+            write_client(client->sock, msg);
+            return 0;
+        }
+    }
+
+    // check if friend list is full
+    if (client->numFriends >= MAX_FRIENDS) {
+        char msg[] = "Error: Friend list is full.";
+        write_client(client->sock, msg);
+        return 0;
+    }
+
+    strncpy(client->friends[client->numFriends], username, BUF_SIZE - 1);
+    client->numFriends++;
+
+    return 1;
+}
+
+void setPrivacy(Client *client, int privacy) {
+    client->private = privacy;
+    char msg[] = "Privacy setting updated.";
+    write_client(client->sock, msg);
+}

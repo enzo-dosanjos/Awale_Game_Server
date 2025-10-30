@@ -97,8 +97,10 @@ void appServer(void)
          c.sock = csock;
          strncpy(c.username, buffer, BUF_SIZE - 1);
          c.gameId = NULL;
+         c.numFriends = 0;
          c.numPendingChallengesTo = 0;
          c.numPendingChallengesFrom = 0;
+         c.bio[0] = '\0';
          c.private = 0;
          clients[actual] = c;
          actual++;
@@ -189,9 +191,29 @@ void appServer(void)
                         send_message_to_all_clients(clients, *client, actual, message, 0);
                      }
                   }
-                  else
+                  else if (strcmp(command, "ADDFRIEND") == 0)
                   {
-
+                     char *username = strtok(NULL, " ");
+                     addFriend(client, username);
+                  }
+                  else if (strcmp(command, "BIO") == 0)
+                  {
+                     char *bio = strtok(NULL, " ");
+                     updateBio(client, bio);
+                  }
+                  else if (strcmp(command, "SHOWBIO") == 0)
+                  {
+                     char *username = strtok(NULL, " ");
+                     showBio(clients, actual, client, username);
+                  }
+                  else if (strcmp(command, "SETPRIVACY") == 0)
+                  {
+                     char *privacyStr = strtok(NULL, " ");
+                     if (strcmp(privacyStr, "true") == 0) {
+                        setPrivacy(client, 1);
+                     } else {
+                        setPrivacy(client, 0);
+                     }
                   }
                }
                break;

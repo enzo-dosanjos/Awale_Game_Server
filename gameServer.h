@@ -35,6 +35,7 @@ typedef struct in_addr IN_ADDR;
 #define BUF_SIZE    1024
 
 #define MAX_PENDING_CHALLENGES 10
+#define MAX_FRIENDS 10
 
 
 typedef struct
@@ -44,6 +45,9 @@ typedef struct
     char bio[BUF_SIZE];
     int private;
     int *gameId;
+    // friends list
+    int numFriends;
+    char friends[MAX_FRIENDS][BUF_SIZE];
     // sent challenges to
     int numPendingChallengesTo;
     char pendingChallengesTo[MAX_PENDING_CHALLENGES][BUF_SIZE];

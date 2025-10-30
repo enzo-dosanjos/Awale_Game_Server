@@ -24,4 +24,12 @@ void clearSentReq(Client *client);
 
 int removeSentReq(Client *clients, Client *client, int actual, char username[]);
 
+void updateBio(Client *client, char bio[]);
+
+int showBio(Client *clients, int actual, Client *requester, char username[]);
+
+int addFriend(Client *client, char username[]);
+
+void setPrivacy(Client *client, int privacy);
+
 #endif //AWALE_GAME_SERVER_COMMANDS_H
