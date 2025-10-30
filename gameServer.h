@@ -44,8 +44,12 @@ typedef struct
     char bio[BUF_SIZE];
     int private;
     int *gameId;
-    int numPendingChallenges;
-    char pendingChallenges[BUF_SIZE][MAX_PENDING_CHALLENGES];
+    // sent challenges to
+    int numPendingChallengesTo;
+    char pendingChallengesTo[MAX_PENDING_CHALLENGES][BUF_SIZE];
+    // received challenges from
+    int numPendingChallengesFrom;
+    char pendingChallengesFrom[MAX_PENDING_CHALLENGES][BUF_SIZE];
 } Client;
 
 typedef struct
@@ -68,6 +72,10 @@ Client *findClientByUsername(Client *clients, int actual, char username[]);
 void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer);
 void remove_client(Client *clients, int to_remove, int *actual);
 void clear_clients(Client *clients, int actual);
+int add_challenge(Client *challenger, Client *challenged);
+int remove_challenge(Client *client, Client *challenged);
+void clear_sent_challenge(Client *client);
+void clear_received_challenge(Client *client);
 
 
 #endif //AWALE_GAME_SERVER_GAMESERVER_H

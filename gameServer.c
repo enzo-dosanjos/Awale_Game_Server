@@ -97,7 +97,8 @@ void appServer(void)
          c.sock = csock;
          strncpy(c.username, buffer, BUF_SIZE - 1);
          c.gameId = NULL;
-         c.numPendingChallenges = 0;
+         c.numPendingChallengesTo = 0;
+         c.numPendingChallengesFrom = 0;
          c.private = 0;
          clients[actual] = c;
          actual++;
@@ -299,3 +300,77 @@ void write_client(SOCKET sock, const char *buffer)
    }
 }
 
+int add_challenge(Client *challenger, Client *challenged) {
+   // check if already challenged
+   for (int i = 0; i < challenger->numPendingChallengesTo; i++) {
+      if (strcmp(challenger->pendingChallengesTo[i], challenged->username) == 0) {
+         char msg[] = "Error: You have already challenged this user.";
+         write_client(challenger->sock, msg);
+         return 0;
+      }
+   }
+
+   // max pending challenges check
+   if (challenger->numPendingChallengesTo >= MAX_PENDING_CHALLENGES) {
+      char msg[] = "Error: You have reached the maximum number of pending challenges. Please wait for one to be accepted.";
+      write_client(challenger->sock, msg);
+      return 0;
+   }
+
+   // max pending challenges check for challenged
+   if (challenger->numPendingChallengesFrom >= MAX_PENDING_CHALLENGES) {
+      char msg[] = "Error: The user you are trying to challenge has reached the maximum number of pending challenges. Please try again later.";
+      write_client(challenged->sock, msg);
+      return 0;
+   }
+
+   strcpy(challenger->pendingChallengesTo[challenger->numPendingChallengesTo], challenged->username);
+   challenger->numPendingChallengesTo++;
+
+   strcpy(challenged->pendingChallengesFrom[challenged->numPendingChallengesFrom], challenger->username);
+   challenged->numPendingChallengesFrom++;
+
+   return 1;
+}
+
+int remove_challenge(Client *client, Client *challenged) {
+   int found = 0;
+   for (int i = 0; i < client->numPendingChallengesTo; i++) {
+      if (strcmp(client->pendingChallengesTo[i], challenged->username) == 0) {
+         // Shift remaining challenges down
+         for (int j = i; j < client->numPendingChallengesTo - 1; j++) {
+            strcpy(client->pendingChallengesTo[j], client->pendingChallengesTo[j + 1]);
+         }
+         client->numPendingChallengesTo--;
+         found = 1;
+         break;
+      }
+   }
+
+   if (!found) {
+      char msg[] = "Error: No pending challenge from that user.";
+      write_client(client->sock, msg);
+      return 0;
+   }
+
+   for (int i = 0; i < challenged->numPendingChallengesFrom; i++) {
+      if (strcmp(challenged->pendingChallengesFrom[i], client->username) == 0) {
+         // Shift remaining challenges down
+         for (int j = i; j < challenged->numPendingChallengesFrom - 1; j++) {
+            strcpy(challenged->pendingChallengesFrom[j], challenged->pendingChallengesFrom[j + 1]);
+         }
+         challenged->numPendingChallengesFrom--;
+         break;
+      }
+   }
+
+   return 1;
+}
+
+void clear_sent_challenge(Client *client) {
+   client->numPendingChallengesTo = 0;
+}
+
+void clear_received_challenge(Client *client) {
+   client->numPendingChallengesTo = 0;
+}

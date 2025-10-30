@@ -5,24 +5,26 @@
 #include <time.h>
 
 int challenge(Client *clients, Client *challenger, int actual, char username[]) {
-    if (challenger->numPendingChallenges >= MAX_PENDING_CHALLENGES) {
-        char msg[] = "Error: You have reached the maximum number of pending challenges. Please wait for one to be accepted.";
-        write_client(challenger->sock, msg);
-        return 0;
-    }
-
     if (strcmp(challenger->username, username) == 0) {
         char msg[] = "Error: You cannot challenge yourself.";
         write_client(challenger->sock, msg);
         return 0;
     }
 
+    Client *challenged = findClientByUsername(clients, actual, username);
+    if (challenged == NULL) {
+        char msg[] = "Error: User not found.";
+        write_client(challenger->sock, msg);
+        return 0;
+    }
+
+    if (add_challenge(challenger, challenged) == 0) {
+        return 0;
+    }
+
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_FROM %s", challenger->username);
     sendMessageToClient(clients, NULL, actual, username, message);
-
-    strcpy(challenger->pendingChallenges[challenger->numPendingChallenges], username);
-    challenger->numPendingChallenges++;
 
     return 1;
 }
@@ -47,6 +49,9 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
         write_client(client->sock, msg);
         return 0;
     }
+
+    // Remove the pending challenge
+    remove_challenge(challengerClient, client);
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
