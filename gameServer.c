@@ -139,6 +139,11 @@ void appServer(void)
                         actualGame++;
                      }
                   }
+                  else if (strcmp(command, "DECLINE") == 0)
+                  {
+                     char *username = strtok(NULL, " ");
+                     declineChallenge(clients, client, actual, username);
+                  }
                   else if (strcmp(command, "LIST") == 0)
                   {
                      listClients(clients, actual, *client);
@@ -146,6 +151,27 @@ void appServer(void)
                   else if (strcmp(command, "LISTGAMES") == 0)
                   {
                      listGames(gameSessions, actualGame, *client);
+                  }
+                  else if (strcmp(command, "SEEPENDINGREQ") == 0)
+                  {
+                     seePendingReq(client);
+                  }
+                  else if (strcmp(command, "SEESENTREQ") == 0)
+                  {
+                     seeSentReq(client);
+                  }
+                  else if (strcmp(command, "CLEARPENDINGREQ") == 0)
+                  {
+                     clearPendingReq(client);
+                  }
+                  else if (strcmp(command, "CLEARSENTREQ") == 0)
+                  {
+                     clearSentReq(client);
+                  }
+                  else if (strcmp(command, "REMOVESENTREQ") == 0)
+                  {
+                     char *username = strtok(NULL, " ");
+                     removeSentReq(clients, client, actual, username);
                   }
                   else if (strcmp(command, "MSG") == 0)
                   {

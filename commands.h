@@ -8,8 +8,20 @@ int challenge(Client *clients, Client *challenger, int actual, char username[]);
 
 int acceptChallenge(Client *clients, Client *client, int actual, char challenger[], GameSession *gameSession);
 
+int declineChallenge(Client *clients, Client *client, int actual, char challenger[]);
+
 void listClients(Client *clients, int actual, Client requester);
 
 void listGames(GameSession *gameSessions, int actualGame, Client requester);
+
+void seePendingReq(Client *client);
+
+void seeSentReq(Client *client);
+
+void clearPendingReq(Client *client);
+
+void clearSentReq(Client *client);
+
+int removeSentReq(Client *clients, Client *client, int actual, char username[]);
 
 #endif //AWALE_GAME_SERVER_COMMANDS_H

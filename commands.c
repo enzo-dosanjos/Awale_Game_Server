@@ -79,6 +79,85 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     return 1;
 }
 
+int declineChallenge(Client *clients, Client *client, int actual, char challenger[]) {
+    Client *challengerClient = findClientByUsername(clients, actual, challenger);
+    if (challengerClient == NULL) {
+        // challenger not found
+        char msg[] = "Error : challenger not found";
+        write_client(client->sock, msg);
+        return 0;
+    }
+
+    // Remove the pending challenge
+    remove_challenge(challengerClient, client);
+
+    char message[BUF_SIZE];
+    snprintf(message, BUF_SIZE, "CHALLENGE_DECLINED_BY %s", client->username);
+    sendMessageToClient(clients, NULL, actual, challenger, message);
+
+    return 1;
+}
+
+void seePendingReq(Client *client) {
+    char message[BUF_SIZE];
+    message[0] = '\0';
+
+    if (client->numPendingChallengesFrom == 0) {
+        strncat(message, "No pending challenges.\n", BUF_SIZE - strlen(message) - 1);
+    } else {
+        strncat(message, "Pending challenges from:\n", BUF_SIZE - strlen(message) - 1);
+        for (int i = 0; i < client->numPendingChallengesFrom; i++) {
+            strncat(message, client->pendingChallengesFrom[i], BUF_SIZE - strlen(message) - 1);
+            strncat(message, "\n", BUF_SIZE - strlen(message) - 1);
+        }
+    }
+    write_client(client->sock, message);
+}
+
+void seeSentReq(Client *client) {
+    char message[BUF_SIZE];
+    message[0] = '\0';
+
+    if (client->numPendingChallengesTo == 0) {
+        strncat(message, "No sent challenges.\n", BUF_SIZE - strlen(message) - 1);
+    } else {
+        strncat(message, "Sent challenges to:\n", BUF_SIZE - strlen(message) - 1);
+        for (int i = 0; i < client->numPendingChallengesTo; i++) {
+            strncat(message, client->pendingChallengesTo[i], BUF_SIZE - strlen(message) - 1);
+            strncat(message, "\n", BUF_SIZE - strlen(message) - 1);
+        }
+    }
+    write_client(client->sock, message);
+}
+
+void clearPendingReq(Client *client) {
+    clear_received_challenge(client);
+    char msg[] = "All received pending challenges cleared.";
+    write_client(client->sock, msg);
+}
+
+void clearSentReq(Client *client) {
+    clear_sent_challenge(client);
+    char msg[] = "All sent pending challenges cleared.";
+    write_client(client->sock, msg);
+}
+
+int removeSentReq(Client *clients, Client *client, int actual, char username[]) {
+    Client *challengedClient = findClientByUsername(clients, actual, username);
+    if (challengedClient == NULL) {
+        char msg[] = "Error: User not found.";
+        write_client(client->sock, msg);
+        return 0;
+    }
+
+    if (remove_challenge(client, challengedClient)) {
+        char msg[] = "Pending challenge removed.";
+        write_client(client->sock, msg);
+    }
+
+    return 1;
+}
+
 void listClients(Client *clients, int actual, Client requester) {
     char message[BUF_SIZE];
     message[0] = '\0';
