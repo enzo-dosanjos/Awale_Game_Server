@@ -124,20 +124,47 @@ void appServer(void)
                else
                {
                   char *command = strtok(buffer, " ");
-                  if (strcmp(command, "CHALLENGE") == 0) {
+                  if (strcmp(command, "CHALLENGE") == 0)
+                  {
                      char *username = strtok(NULL, " ");
                      challenge(clients, client, actual, username);
-                  } else if (strcmp(command, "ACCEPT") == 0) {
+                  }
+                  else if (strcmp(command, "ACCEPT") == 0)
+                  {
                      char *username = strtok(NULL, " ");
                      GameSession newGameSession;
                      if (acceptChallenge(clients, client, actual, username, &newGameSession)) {
                         gameSessions[actualGame] = newGameSession;
                         actualGame++;
                      }
-                  } else if (strcmp(command, "LIST") == 0) {
+                  }
+                  else if (strcmp(command, "LIST") == 0)
+                  {
                      listClients(clients, actual, *client);
-                  } else if (strcmp(command, "LISTGAMES") == 0) {
+                  }
+                  else if (strcmp(command, "LISTGAMES") == 0)
+                  {
                      listGames(gameSessions, actualGame, *client);
+                  }
+                  else if (strcmp(command, "MSG") == 0)
+                  {
+                     // check if it's a private message by checking the number of tokens
+                     char *msgOrUsername = strtok(NULL, " ");
+                     char *msgOrNull = strtok(NULL, " ");
+                     if (msgOrNull != NULL) {
+                        // It's a private message
+                        char *username = msgOrUsername;
+                        char *message = msgOrNull;
+                        sendMessageToClient(clients, client, actual, username, message);
+                     } else {
+                        // It's a public message
+                        char *message = msgOrUsername;
+                        send_message_to_all_clients(clients, *client, actual, message, 0);
+                     }
+                  }
+                  else
+                  {
+
                   }
                }
                break;
@@ -174,17 +201,13 @@ void send_message_to_all_clients(Client *clients, Client sender, int actual, con
    message[0] = 0;
    for(i = 0; i < actual; i++)
    {
-      /* we don't send message to the sender */
-      if(sender.sock != clients[i].sock)
+      if(from_server == 0)
       {
-         if(from_server == 0)
-         {
-            strncpy(message, sender.username, BUF_SIZE - 1);
-            strncat(message, " : ", sizeof message - strlen(message) - 1);
-         }
-         strncat(message, buffer, sizeof message - strlen(message) - 1);
-         write_client(clients[i].sock, message);
+         strncpy(message, sender.username, BUF_SIZE - 1);
+         strncat(message, " : ", sizeof message - strlen(message) - 1);
       }
+      strncat(message, buffer, sizeof message - strlen(message) - 1);
+      write_client(clients[i].sock, message);
    }
 }
 
@@ -200,11 +223,19 @@ Client *findClientByUsername(Client *clients, int actual, char username[])
    return NULL; // Not found
 }
 
-void sendMessageToClient(Client *clients, int actual, char username[], const char *buffer)
+void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer)
 {
+   char message[BUF_SIZE];
+   message[0] = '\0';
+   if (sender != NULL) {
+      strncpy(message, sender->username, BUF_SIZE - 1);
+      strncat(message, " : ", sizeof message - strlen(message) - 1);
+   }
+
    Client *client = findClientByUsername(clients, actual, username);
    if (client != NULL) {
-         write_client(client->sock, buffer);
+      strncat(message, buffer, sizeof message - strlen(message) - 1);
+      write_client(client->sock, message);
    }
 }
 

@@ -65,7 +65,7 @@ int read_client(SOCKET sock, char *buffer);
 void write_client(SOCKET sock, const char *buffer);
 void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
 Client *findClientByUsername(Client *clients, int actual, char username[]);
-void sendMessageToClient(Client *clients, int actual, char username[], const char *buffer);
+void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer);
 void remove_client(Client *clients, int to_remove, int *actual);
 void clear_clients(Client *clients, int actual);
 

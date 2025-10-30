@@ -19,7 +19,7 @@ int challenge(Client *clients, Client *challenger, int actual, char username[]) 
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_FROM %s", challenger->username);
-    sendMessageToClient(clients, actual, username, message);
+    sendMessageToClient(clients, NULL, actual, username, message);
 
     strcpy(challenger->pendingChallenges[challenger->numPendingChallenges], username);
     challenger->numPendingChallenges++;
@@ -56,10 +56,10 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
-    sendMessageToClient(clients, actual, challenger, message);
+    sendMessageToClient(clients, NULL, actual, challenger, message);
 
     strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
-    sendMessageToClient(clients, actual, client->username, message);
+    sendMessageToClient(clients, NULL, actual, client->username, message);
 
     char rotationStr[2];
     read_client(client->sock, rotationStr);
@@ -134,4 +134,11 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
         }
     }
     write_client(requester.sock, message);
+}
+
+void sendMP(Client *clients, int actual, char *username, char *message) {
+    Client *client = findClientByUsername(clients, actual, username);
+    if (client != NULL) {
+        write_client(client->sock, message);
+    }
 }
