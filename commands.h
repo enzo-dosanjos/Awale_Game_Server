@@ -11,6 +11,8 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
 
 int declineChallenge(Client *clients, Client *client, int actual, char challenger[]);
 
+int move(Client *client, GameSession *gameSessions, int actualGame, int house);
+
 void listClients(Client *clients, int actual, Client requester);
 
 void listGames(GameSession *gameSessions, int actualGame, Client requester);

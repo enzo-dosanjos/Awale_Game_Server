@@ -168,6 +168,55 @@ int removeSentReq(Client *clients, Client *client, int actual, char username[]) 
     return 1;
 }
 
+int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
+    if (!client->gameId) { // quel id si pas inGame
+        return 0;
+    }
+
+    int i = 0;
+    while ((i < actualGame) && (gameSessions[i].id != *(client->gameId))) i++;
+    if (i == actualGame) {
+        return 0;
+    }
+
+    GameSession *gameSession = &(gameSessions[i]);
+    Move move;
+    move.houseNum = house;
+
+    if (client != gameSession->players[gameSession->currentPlayer]) {
+        char msg[] = "Error: It's not your turn, please wait for the opponent to make their move.";
+        write_client(client->sock, msg);
+        return 0;
+    }
+    
+    int next = nextPlayer(gameSession->currentPlayer);
+    Client *opponent = gameSession->players[next];
+    move.numPlayer = gameSession->currentPlayer;
+
+    if (!playMove(&gameSession->game, move)) {
+        char msg[] = "Error: This is not legal. Please try again";
+        write_client(client->sock, msg);
+        return 0;
+    }
+
+    char movePlayed[BUF_SIZE] = "\0";
+    sprintf(movePlayed, "%s played %d!\n", client->username, move.houseNum);
+    write_client(opponent->sock, movePlayed);
+
+    gameSession->currentPlayer = next;
+
+    char grid[BUF_SIZE] = "\0";
+    char usernames[NUM_PLAYERS][BUF_SIZE];
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        strcpy(usernames[i], gameSession->players[i]->username);
+    }
+    printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
+    write_client(client->sock, grid);
+    write_client(opponent->sock, grid);
+
+    return 1;
+}
+
 void listClients(Client *clients, int actual, Client requester) {
     char message[BUF_SIZE];
     message[0] = '\0';

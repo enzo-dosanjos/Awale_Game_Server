@@ -175,6 +175,12 @@ void appServer(void)
                      char *username = strtok(NULL, " ");
                      removeSentReq(clients, client, actual, username);
                   }
+                  else if (strcmp(command, "MOVE") == 0)
+                  {
+                     char *houseChar = strtok(NULL, " ");
+                     int house = atoi(houseChar);
+                     move(client, gameSessions, actualGame, house);
+                  }
                   else if (strcmp(command, "MSG") == 0)
                   {
                      // check if it's a private message by checking the number of tokens
