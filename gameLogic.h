@@ -13,5 +13,6 @@ int nextPlayer (int currentPlayer);
 
 int endGame (Game *game);
 
+int playerSelector ();
 
 #endif //AWALE_GAME_SERVER_GAMELOGIC_H

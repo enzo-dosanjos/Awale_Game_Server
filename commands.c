@@ -67,7 +67,7 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     Game game = startGame(rotation);
 
     gameSession->game = game;
-    gameSession->currentPlayer = 0;
+    gameSession->currentPlayer = playerSelector();
 
     gameSession->players[0] = challengerClient;
     gameSession->players[1] = client;
@@ -84,6 +84,7 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     printGridMessage(message, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     write_client(client->sock, message);
     write_client(challengerClient->sock, message);
+    write_client(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
 
     return 1;
 }

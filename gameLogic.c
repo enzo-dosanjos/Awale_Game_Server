@@ -35,6 +35,10 @@ int nextPlayer (int currentPlayer) {
     return (currentPlayer + 1) % NUM_PLAYERS;
 }
 
+int playerSelector () {
+    return rand() % NUM_PLAYERS;
+}
+
 int endGame (Game *game) {
     // Collect remaining seeds
     for (int i = 0; i < NUM_PLAYERS; i++) {
