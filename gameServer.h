@@ -59,7 +59,7 @@ typedef struct
 typedef struct
 {
     int id;
-    Client players[NUM_PLAYERS];
+    Client *players[NUM_PLAYERS];
     Game game;
     int currentPlayer;
 } GameSession;

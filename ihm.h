@@ -1,5 +1,12 @@
+#ifndef AWALE_GAME_SERVER_IHM_H
+#define AWALE_GAME_SERVER_IHM_H
+
 #include "gameUtils.h"
 
-void printGrid (Game game, int gridX, int gridY);
+#define BUF_SIZE    1024
 
-void printGameEnd(Game game, int numPlayers, int winner);
+void printGridMessage(char message[], Game *game, int gridX, int gridY, char usernames[][BUF_SIZE]);
+
+void printGameEndMessage(char message[], Game *game, int nbPlayers, int winner);
+
+#endif //AWALE_GAME_SERVER_IHM_H

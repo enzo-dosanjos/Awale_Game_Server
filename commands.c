@@ -69,12 +69,21 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     gameSession->game = game;
     gameSession->currentPlayer = 0;
 
-    gameSession->players[0] = *challengerClient;
-    gameSession->players[1] = *client;
+    gameSession->players[0] = challengerClient;
+    gameSession->players[1] = client;
     gameSession->id = (int) time(NULL);  // timestamp
 
     challengerClient->gameId = &gameSession->id;
     client->gameId = &gameSession->id;
+
+    message[0] = '\0';
+    char usernames[NUM_PLAYERS][BUF_SIZE];
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        strcpy(usernames[i], gameSession->players[i]->username);
+    }
+    printGridMessage(message, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
+    write_client(client->sock, message);
+    write_client(challengerClient->sock, message);
 
     return 1;
 }
@@ -206,8 +215,8 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
             char gameInfo[BUF_SIZE];
             snprintf(gameInfo, BUF_SIZE, "Game ID: %d | Players: %s vs %s\n",
                      gameSessions[i].id,
-                     gameSessions[i].players[0].username,
-                     gameSessions[i].players[1].username);
+                     gameSessions[i].players[0]->username,
+                     gameSessions[i].players[1]->username);
             strncat(message, gameInfo, BUF_SIZE - strlen(message) - 1);
         }
     }

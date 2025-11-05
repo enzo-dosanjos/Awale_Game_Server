@@ -1,31 +1,46 @@
 #include "ihm.h"
 #include <stdio.h>
+#include <string.h>
 
-void printGrid (Game game, int gridX, int gridY) {
+void printGridMessage (char message[], Game *game, int gridX, int gridY, char usernames[][BUF_SIZE]) {
+    char toAdd[BUF_SIZE] = "\0";
+
+    strcat(message, "==========\n");
+
     for (int i = 0; i < gridY; i++) {
-        if ((game.rotation == 0 && i == 0) || (game.rotation == 1 && i > 0)) {
+        if ((game->rotation == 0 && i == 0) || (game->rotation == 1 && i > 0)) {
             for (int j = gridX - 1; j >= 0; j--) {
-                printf("%d ", game.grid[i][j]);
+                sprintf(toAdd, "%d ", game->grid[i][j]);
+                strcat(message, toAdd);
             }
-        } else if ((game.rotation == 0 && i > 0) || (game.rotation == 1 && i == 0)) {
+        } else if ((game->rotation == 0 && i > 0) || (game->rotation == 1 && i == 0)) {
             for (int j = 0; j < gridX; j++) {
-                printf("%d ", game.grid[i][j]);
+                sprintf(toAdd, "%d ", game->grid[i][j]);
+                strcat(message, toAdd);
             }
         }
-        printf("\n");
+
+        sprintf(toAdd, "%s : %d seeds\n", usernames[i], game->scores[i]);
+        strcat(message, toAdd);
     }
+
+    strcat(message, "==========\n");
 }
 
-void printGameEnd(Game game, int numPlayers, int winner) {
-    printf("\n=== GAME OVER ===\n");
-    printf("Final Scores:\n");
-    for (int i = 0; i < numPlayers; i++) {
-        printf("Player %d: %d\n", i + 1, game.scores[i]);
+void printGameEndMessage(char message[], Game *game, int nbPlayers, int winner) {
+    char toAdd[BUF_SIZE] = "\0";
+
+    strcat(message, "=== GAME OVER ===\nFinal Scores:\n");
+
+    for (int i = 0; i < nbPlayers; i++) {
+        sprintf(toAdd, "Player %d: %d\n", i + 1, game->scores[i]);
+        strcat(message, toAdd);
     }
 
     if (winner >= 0) {
-        printf("Player %d wins!\n", winner + 1);
+        sprintf(toAdd, "Player %d wins!\n", winner + 1);
     } else {
-        printf("It’s a draw!\n");
+        sprintf(toAdd, "It’s a draw!\n");
     }
+    strcat(message, toAdd);
 }

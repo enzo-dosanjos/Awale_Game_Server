@@ -60,35 +60,3 @@ int endGame (Game game) {
 
     return draw ? -1 : winner;
 }
-
-int playGame() {
-    int rotation = 0;  // 0 for counter-clockwise, 1 for clockwise
-    printf("Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
-    scanf("%d", &(rotation));
-    int currentPlayer = 0;
-    Game game = startGame(rotation);
-
-    while (isGameOver(game, NUM_PLAYERS, NUM_HOUSES)) {
-        Move move;
-        move.numPlayer = currentPlayer;
-
-        printf("Player %d, enter your move (house number 0-%d): ", currentPlayer, NUM_HOUSES - 1);
-        scanf("%d", &(move.houseNum));
-
-        while (!playMove(game, move)) {
-            printf("Illegal move. Player %d, enter your move (house number 0-%d): ", currentPlayer, NUM_HOUSES - 1);
-            scanf("%d", &(move.houseNum));
-        }
-
-        printGrid(game, NUM_HOUSES, NUM_PLAYERS);
-
-        currentPlayer = nextPlayer(currentPlayer);
-    }
-
-    int winner = endGame(game);
-    printGameEnd(game, NUM_PLAYERS, winner);
-
-    freeGame(game);
-
-    return 0;
-}

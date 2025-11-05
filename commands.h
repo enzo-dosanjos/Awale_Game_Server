@@ -3,6 +3,7 @@
 
 #include "gameLogic.h"
 #include "gameServer.h"
+#include "ihm.h"
 
 int challenge(Client *clients, Client *challenger, int actual, char username[]);
 
