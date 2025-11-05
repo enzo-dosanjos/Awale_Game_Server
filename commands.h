@@ -13,6 +13,12 @@ int declineChallenge(Client *clients, Client *client, int actual, char challenge
 
 int move(Client *client, GameSession *gameSessions, int actualGame, int house);
 
+int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame);
+
+int acceptEndgame(Client *client, GameSession *gameSessions, int actualGame);
+
+void handleEndgame(GameSession *gameSession);
+
 void listClients(Client *clients, int actual, Client requester);
 
 void listGames(GameSession *gameSessions, int actualGame, Client requester);

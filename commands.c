@@ -72,6 +72,7 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     gameSession->players[0] = challengerClient;
     gameSession->players[1] = client;
     gameSession->id = (int) time(NULL);  // timestamp
+    gameSession->endGameSuggested = -1;
 
     challengerClient->gameId = &gameSession->id;
     client->gameId = &gameSession->id;
@@ -169,17 +170,20 @@ int removeSentReq(Client *clients, Client *client, int actual, char username[]) 
 }
 
 int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
-    if (!client->gameId) { // quel id si pas inGame
+    if (!client->gameId) {
         return 0;
     }
 
-    int i = 0;
-    while ((i < actualGame) && (gameSessions[i].id != *(client->gameId))) i++;
-    if (i == actualGame) {
+    GameSession *gameSession = findGameSessionByClient(client, gameSessions, actualGame);
+    if (gameSession == NULL) {
         return 0;
     }
 
-    GameSession *gameSession = &(gameSessions[i]);
+    if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES)) {
+        handleEndgame(gameSession);
+        return 1;
+    }
+
     Move move;
     move.houseNum = house;
 
@@ -215,6 +219,69 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
     write_client(opponent->sock, grid);
 
     return 1;
+}
+
+int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame) {
+    if (!client->gameId) {
+        return 0;
+    }
+
+    GameSession *gameSession = findGameSessionByClient(client, gameSessions, actualGame);
+    if (gameSession == NULL) {
+        return 0;
+    }
+
+    if (gameSession->players[0] == client) {
+        if (gameSession->endGameSuggested == 1) {
+            handleEndgame(gameSession);
+        }
+        gameSession->endGameSuggested = 0;
+    } else if (gameSession->players[1] == client) {
+        if (gameSession->endGameSuggested == 0) {
+            handleEndgame(gameSession);
+        }
+        gameSession->endGameSuggested = 1;
+    }
+    
+    Client *opponent = gameSession->players[nextPlayer(gameSession->currentPlayer)];
+    write_client(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?");
+
+    return 1;
+}
+
+int acceptEndgame(Client *client, GameSession *gameSessions, int actualGame) {
+        if (!client->gameId) {
+        return 0;
+    }
+
+    GameSession *gameSession = findGameSessionByClient(client, gameSessions, actualGame);
+    if (gameSession == NULL) {
+        return 0;
+    }
+
+    if (gameSession->players[!gameSession->endGameSuggested] == client) {
+        handleEndgame(findGameSessionByClient(client, gameSession, actualGame));
+        return 1;
+    }
+
+    return 0;
+}
+
+void handleEndgame(GameSession *gameSession) {
+    int winner = endGame(&gameSession->game);
+
+    char message[BUF_SIZE] = "\0";
+    char usernames[NUM_PLAYERS][BUF_SIZE];
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        strcpy(usernames[i], gameSession->players[i]->username);
+    }
+    printGameEndMessage(message, &gameSession->game, NUM_PLAYERS, winner, usernames);
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+
+    write_client(gameSession->players[i]->sock, message);
+    }
+
+    freeGame(&gameSession->game);
 }
 
 void listClients(Client *clients, int actual, Client requester) {

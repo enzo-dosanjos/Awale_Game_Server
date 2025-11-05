@@ -27,18 +27,18 @@ void printGridMessage (char message[], Game *game, int gridX, int gridY, char us
     strcat(message, "==========\n");
 }
 
-void printGameEndMessage(char message[], Game *game, int nbPlayers, int winner) {
+void printGameEndMessage(char message[], Game *game, int nbPlayers, int winner, char usernames[][BUF_SIZE]) {
     char toAdd[BUF_SIZE] = "\0";
 
     strcat(message, "=== GAME OVER ===\nFinal Scores:\n");
 
     for (int i = 0; i < nbPlayers; i++) {
-        sprintf(toAdd, "Player %d: %d\n", i + 1, game->scores[i]);
+        sprintf(toAdd, "    %s: %d\n", usernames[i], game->scores[i]);
         strcat(message, toAdd);
     }
 
     if (winner >= 0) {
-        sprintf(toAdd, "Player %d wins!\n", winner + 1);
+        sprintf(toAdd, "%s wins!\n", usernames[winner]);
     } else {
         sprintf(toAdd, "It’s a draw!\n");
     }

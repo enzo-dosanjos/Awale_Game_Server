@@ -133,13 +133,15 @@ void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers, int nbHouse
 
 int isGameOver(Game *game, int nbPlayers, int nbHouses)
 {
-    int noLegalMoves = 0;
     for (int i = 0; i < nbPlayers; i++)
     {
+        int noLegalMoves = 1;
+        
         if (game->scores[i] >= 25)
         {
             return 1;
         }
+
         Move move;
         move.numPlayer = i;
         for (int j = 0; j < nbHouses; j++)
@@ -147,14 +149,14 @@ int isGameOver(Game *game, int nbPlayers, int nbHouses)
             move.houseNum = j;
             if (checkLegalMove(game, move, nbPlayers, nbHouses))
             {
-                noLegalMoves = 1;
+                noLegalMoves = 0;
             }
         }
-    }
 
-    if (noLegalMoves)
-    {
-        return 1;
+        if (noLegalMoves)
+        {
+            return 1;
+        }
     }
 
     return 0;

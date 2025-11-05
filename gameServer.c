@@ -181,6 +181,14 @@ void appServer(void)
                      int house = atoi(houseChar);
                      move(client, gameSessions, actualGame, house);
                   }
+                  else if (strcmp(command, "ENDGAME") == 0)
+                  {
+                     suggestEndgame(client, gameSessions, actualGame);
+                  }
+                  else if (strcmp(command, "ACCEPTEND") == 0)
+                  {
+                     acceptEndgame(client, gameSessions, actualGame);
+                  }
                   else if (strcmp(command, "MSG") == 0)
                   {
                      // check if it's a private message by checking the number of tokens
@@ -276,6 +284,17 @@ Client *findClientByUsername(Client *clients, int actual, char username[])
       }
    }
    return NULL; // Not found
+}
+
+GameSession *findGameSessionByClient(Client *client, GameSession *gameSessions, int actualGame)
+{
+   int i = 0;
+   while ((i < actualGame) && (gameSessions[i].id != *(client->gameId))) i++;
+   if (i == actualGame) {
+      return NULL; // Not found
+   }
+
+   return &(gameSessions[i]);
 }
 
 void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer)
