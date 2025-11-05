@@ -7,11 +7,11 @@
 
 Game startGame (int rotation);
 
-int playMove (Game game, Move move);
+int playMove (Game *game, Move move);
 
 int nextPlayer (int currentPlayer);
 
-int endGame (Game game);
+int endGame (Game *game);
 
 
 #endif //AWALE_GAME_SERVER_GAMELOGIC_H

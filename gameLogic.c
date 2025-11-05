@@ -14,10 +14,10 @@ Game startGame (int rotation) {
     return game;
 }
 
-int playMove (Game game, Move move) {
-    if (game.rotation == 0 && move.numPlayer == 0) {
+int playMove (Game *game, Move move) {
+    if (game->rotation == 0 && move.numPlayer == 0) {
         move.houseNum = (NUM_HOUSES - 1) - move.houseNum;
-    } else if (game.rotation == 1 && move.numPlayer == 1) {
+    } else if (game->rotation == 1 && move.numPlayer == 1) {
         move.houseNum = (NUM_HOUSES - 1) - move.houseNum;
     }
 
@@ -35,12 +35,12 @@ int nextPlayer (int currentPlayer) {
     return (currentPlayer + 1) % NUM_PLAYERS;
 }
 
-int endGame (Game game) {
+int endGame (Game *game) {
     // Collect remaining seeds
     for (int i = 0; i < NUM_PLAYERS; i++) {
         for (int j = 0; j < NUM_HOUSES; j++) {
-            game.scores[i] += game.grid[i][j];
-            game.grid[i][j] = 0;
+            game->scores[i] += game->grid[i][j];
+            game->grid[i][j] = 0;
         }
     }
 
@@ -49,11 +49,11 @@ int endGame (Game game) {
     int winner = -1;
     int draw = 0;
     for (int i = 0; i < NUM_PLAYERS; i++) {
-        if (game.scores[i] > maxScore) {
-            maxScore = game.scores[i];
+        if (game->scores[i] > maxScore) {
+            maxScore = game->scores[i];
             winner = i;
             draw = 0;
-        } else if (game.scores[i] == maxScore) {
+        } else if (game->scores[i] == maxScore) {
             draw = 1;
         }
     }

@@ -23,7 +23,7 @@ int **initGrid(int nbPlayers, int nbHouses, int nbSeeds)
     return grid;
 }
 
-void copyGame(Game game, Game *copy, int nbPlayers, int nbHouses)
+void copyGame(Game *game, Game *copy, int nbPlayers, int nbHouses)
 {
     int **grid = malloc(nbPlayers * sizeof(int *));
     int *data = malloc(nbPlayers * nbHouses * sizeof(int));
@@ -37,26 +37,26 @@ void copyGame(Game game, Game *copy, int nbPlayers, int nbHouses)
     {
         for (int j = 0; j < nbHouses; j++)
         {
-            grid[i][j] = game.grid[i][j];
+            grid[i][j] = game->grid[i][j];
         }
     }
 
     copy->grid = grid;
-    copy->rotation = game.rotation;
+    copy->rotation = game->rotation;
     copy->scores = malloc(nbPlayers * sizeof(int));
     for (int i = 0; i < nbPlayers; i++) {
-        copy->scores[i] = game.scores[i];
+        copy->scores[i] = game->scores[i];
     }
 }
 
-int checkFamishedPlayer(Game game, int numPlayer, int nbHouses)
+int checkFamishedPlayer(Game *game, int numPlayer, int nbHouses)
 {
     int empty = 1;
 
     int i = 0;
     while (i < nbHouses && empty)
     {
-        if (game.grid[numPlayer][i] != 0)
+        if (game->grid[numPlayer][i] != 0)
         {
             empty = 0;
         }
@@ -69,10 +69,10 @@ int checkFamishedPlayer(Game game, int numPlayer, int nbHouses)
     return 0;
 }
 
-int checkLegalMove(Game game, Move move, int nbPlayers, int nbHouses)
+int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
 {
     // Check if the house is empty
-    if (game.grid[move.numPlayer][move.houseNum] == 0)
+    if (game->grid[move.numPlayer][move.houseNum] == 0)
     {
         return 0;
     }
@@ -81,8 +81,8 @@ int checkLegalMove(Game game, Move move, int nbPlayers, int nbHouses)
     
     Game tempGame;
     copyGame(game, &tempGame, nbPlayers, nbHouses);
-    makeAMove(tempGame, move, 1, nbPlayers, nbHouses);
-    int famishedNext = checkFamishedPlayer(tempGame, (move.numPlayer + 1) % nbPlayers, nbHouses);
+    makeAMove(&tempGame, move, 1, nbPlayers, nbHouses);
+    int famishedNext = checkFamishedPlayer(&tempGame, (move.numPlayer + 1) % nbPlayers, nbHouses);
 
     // Check if the move feeds a famished opponent
     if (famishedCurr && famishedNext)
@@ -99,12 +99,12 @@ int checkLegalMove(Game game, Move move, int nbPlayers, int nbHouses)
     return 1;
 }
 
-void makeAMove(Game game, Move move, int capturesOk, int nbPlayers, int nbHouses)
+void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers, int nbHouses)
 {
-    int *gameGrid = &game.grid[0][0];
+    int *gameGrid = &game->grid[0][0];
 
     int houseInd = move.numPlayer * nbHouses + move.houseNum;
-    int numSeeds = game.grid[move.numPlayer][move.houseNum];
+    int numSeeds = game->grid[move.numPlayer][move.houseNum];
 
     gameGrid[houseInd] = 0;
 
@@ -124,19 +124,19 @@ void makeAMove(Game game, Move move, int capturesOk, int nbPlayers, int nbHouses
 
         while ((gameGrid[i] == 2 || gameGrid[i] == 3) & (i % nbHouses != move.numPlayer))
         {
-            game.scores[move.numPlayer] += gameGrid[i];
+            game->scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
             i -= 1;
         }
     }
 }
 
-int isGameOver(Game game, int nbPlayers, int nbHouses)
+int isGameOver(Game *game, int nbPlayers, int nbHouses)
 {
     int noLegalMoves = 0;
     for (int i = 0; i < nbPlayers; i++)
     {
-        if (game.scores[i] >= 25)
+        if (game->scores[i] >= 25)
         {
             return 1;
         }
@@ -160,9 +160,9 @@ int isGameOver(Game game, int nbPlayers, int nbHouses)
     return 0;
 }
 
-void freeGame(Game game)
+void freeGame(Game *game)
 {
-    free(game.grid[0]);
-    free(game.grid);
-    free(game.scores);
+    free(game->grid[0]);
+    free(game->grid);
+    free(game->scores);
 }
