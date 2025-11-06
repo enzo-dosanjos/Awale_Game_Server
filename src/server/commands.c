@@ -283,6 +283,10 @@ void handleEndgame(GameSession *gameSession) {
     writeClient(gameSession->players[i]->sock, message);
     }
 
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        gameSession->players[i]->gameId = NULL;
+    }
+
     freeGame(&gameSession->game);
 }
 
