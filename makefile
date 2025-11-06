@@ -10,8 +10,8 @@ BUILD_DIR := build
 SERVSOURCES = src/game/gameLogic.c src/game/gameUtils.c src/game/ihm.c \
 			  src/server/gameServer.c src/server/mainServer.c src/server/commands.c src/server/serverUtils.c
 CLIENTSOURCES = src/client/client.c
-SERVOBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(SERVSOURCES))
-CLIENTOBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CLIENTSOURCES))
+SERVOBJECTS = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SERVSOURCES))
+CLIENTOBJECTS = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CLIENTSOURCES))
 
 all: clean $(TARGET)
 server: $(ServTARGET)
@@ -21,14 +21,14 @@ debug: CXXFLAGS := $(CXXFLAGS_DEBUG)
 debug: clean $(TARGET)
 
 # Création de l'exécutable
-$(ServTARGET): $(OBJECTS)
+$(ServTARGET): $(SERVOBJECTS)
 	$(CXX) $(CXXFLAGS) -o $(ServTARGET) $(SERVOBJECTS)
 
-$(ClientTARGET): $(patsubst %.c, $(BUILD_DIR)/%.o, $(CLIENTSOURCES))
+$(ClientTARGET): $(CLIENTOBJECTS)
 	$(CXX) $(CXXFLAGS) -o $(ClientTARGET) $(CLIENTOBJECTS)
 
 # Compilation de chaque fichier source en objet
-$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
