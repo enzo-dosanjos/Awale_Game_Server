@@ -129,11 +129,23 @@ void appServer(void)
                   if (strcmp(command, "CHALLENGE") == 0)
                   {
                      char *username = strtok(NULL, " ");
+                     if (username == NULL) {
+                        char msg[] = "Error: No username provided for challenge. Use: CHALLENGE <username>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      challenge(clients, client, actual, username);
                   }
                   else if (strcmp(command, "ACCEPT") == 0)
                   {
                      char *username = strtok(NULL, " ");
+                     if (username == NULL) {
+                        char msg[] = "Error: No username provided to accept challenge from. Use: ACCEPT <username>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      GameSession newGameSession;
                      if (acceptChallenge(clients, client, actual, username, &newGameSession)) {
                         gameSessions[actualGame] = newGameSession;
@@ -143,6 +155,12 @@ void appServer(void)
                   else if (strcmp(command, "DECLINE") == 0)
                   {
                      char *username = strtok(NULL, " ");
+                     if (username == NULL) {
+                        char msg[] = "Error: No username provided to decline challenge from. Use: DECLINE <username>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      declineChallenge(clients, client, actual, username);
                   }
                   else if (strcmp(command, "LIST") == 0)
@@ -172,11 +190,23 @@ void appServer(void)
                   else if (strcmp(command, "REMOVESENTREQ") == 0)
                   {
                      char *username = strtok(NULL, " ");
+                     if (username == NULL) {
+                        char msg[] = "Error: No username provided to remove sent challenge to. Use: REMOVESENTREQ <username>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      removeSentReq(clients, client, actual, username);
                   }
                   else if (strcmp(command, "MOVE") == 0)
                   {
                      char *houseChar = strtok(NULL, " ");
+                     if (houseChar == NULL) {
+                        char msg[] = "Error: No house number provided for move. Use: MOVE <house_number>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      int house = atoi(houseChar);
                      move(client, gameSessions, actualGame, house);
                   }
@@ -192,6 +222,12 @@ void appServer(void)
                   {
                      // check if it's a private message by checking the number of tokens
                      char *msgOrUsername = strtok(NULL, " ");
+                     if (msgOrUsername == NULL) {
+                        char msg[] = "Error: No message provided. Use: MSG <message> or MSG @<username> <message>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      char *restOfMsg = strtok(NULL, "");
                      if (msgOrUsername[0] == '@') {
                         // It's a private message
@@ -209,21 +245,41 @@ void appServer(void)
                   else if (strcmp(command, "ADDFRIEND") == 0)
                   {
                      char *username = strtok(NULL, " ");
+                     if (username == NULL) {
+                        char msg[] = "Error: No username provided to add as friend. Use: ADDFRIEND <username>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      addFriend(client, username);
                   }
                   else if (strcmp(command, "BIO") == 0)
                   {
                      char *bio = strtok(NULL, " ");
+                     if (bio == NULL) {
+                        char msg[] = "Error: No bio provided. Use: BIO <your_bio>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      updateBio(client, bio);
                   }
                   else if (strcmp(command, "SHOWBIO") == 0)
                   {
                      char *username = strtok(NULL, " ");
+                     // username can be NULL here to show own bio
+
                      showBio(clients, actual, client, username);
                   }
                   else if (strcmp(command, "SETPRIVACY") == 0)
                   {
                      char *privacyStr = strtok(NULL, " ");
+                     if (privacyStr == NULL) {
+                        char msg[] = "Error: No privacy setting provided. Use: SETPRIVACY <true|false>";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
                      if (strcmp(privacyStr, "true") == 0) {
                         setPrivacy(client, 1);
                      } else {
