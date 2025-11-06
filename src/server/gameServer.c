@@ -233,7 +233,7 @@ void appServer(void)
                         // It's a private message
                         char *username = msgOrUsername + 1; // Skip the '@' character
                         char *message = restOfMsg;
-                        sendMessageToClient(clients, client, actual, username, message);
+                        sendMP(clients, client, actual, username, message);
                      } else {
                         // It's a public message
                         // Reconstruct message

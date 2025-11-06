@@ -348,8 +348,13 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
 
 void sendMP(Client *clients, int actual, char *username, char *message) {
     Client *client = findClientByUsername(clients, actual, username);
+
+    // Format message to add sender's name
+    char formattedMessage[BUF_SIZE];
+    snprintf(formattedMessage, BUF_SIZE, "%s (private): %s\n", sender->username, message);
+
     if (client != NULL) {
-        writeClient(client->sock, message);
+        writeClient(client->sock, formattedMessage);
     }
 }
 

@@ -33,6 +33,8 @@ void clearSentReq(Client *client);
 
 int removeSentReq(Client *clients, Client *client, int actual, char username[]);
 
+void sendMP(Client *clients, Client *sender, int actual, char *username, char *message);
+
 void updateBio(Client *client, char bio[]);
 
 int showBio(Client *clients, int actual, Client *requester, char username[]);
