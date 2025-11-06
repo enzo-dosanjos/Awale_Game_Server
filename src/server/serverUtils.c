@@ -57,19 +57,21 @@ void removeClient(Client *clients, int to_remove, int *actual)
    (*actual)--;
 }
 
-void sendMessageToAllClients(Client *clients, Client sender, int actual, const char *buffer, char from_server)
+void sendMessageToAllClients(Client *clients, char sender[], int actual, const char *buffer, char from_server)
 {
    int i = 0;
    char message[BUF_SIZE];
    message[0] = 0;
+
+   if(from_server == 0)
+   {
+      strncpy(message, sender, BUF_SIZE - 1);
+      strncat(message, " : ", sizeof message - strlen(message) - 1);
+   }
+   strncat(message, buffer, sizeof message - strlen(message) - 1);
+   
    for(i = 0; i < actual; i++)
    {
-      if(from_server == 0)
-      {
-         strncpy(message, sender.username, BUF_SIZE - 1);
-         strncat(message, " : ", sizeof message - strlen(message) - 1);
-      }
-      strncat(message, buffer, sizeof message - strlen(message) - 1);
       writeClient(clients[i].sock, message);
    }
 }

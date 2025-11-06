@@ -118,10 +118,10 @@ void appServer(void)
                if(c == 0)
                {
                   closesocket(clients[i].sock);
-                  removeClient(clients, i, &actual);
                   strncpy(buffer, client->username, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  sendMessageToAllClients(clients, *client, actual, buffer, 1);
+                  removeClient(clients, i, &actual);
+                  sendMessageToAllClients(clients, client->username, actual, buffer, 1);
                }
                else
                {
@@ -239,7 +239,7 @@ void appServer(void)
                         // Reconstruct message
                         char message[BUF_SIZE];
                         snprintf(message, BUF_SIZE, "%s %s", msgOrUsername, restOfMsg);
-                        sendMessageToAllClients(clients, *client, actual, message, 0);
+                        sendMessageToAllClients(clients, client->username, actual, message, 0);
                      }
                   }
                   else if (strcmp(command, "ADDFRIEND") == 0)
