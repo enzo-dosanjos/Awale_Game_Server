@@ -192,15 +192,17 @@ void appServer(void)
                   {
                      // check if it's a private message by checking the number of tokens
                      char *msgOrUsername = strtok(NULL, " ");
-                     char *msgOrNull = strtok(NULL, " ");
-                     if (msgOrNull != NULL) {
+                     char *restOfMsg = strtok(NULL, "");
+                     if (msgOrUsername[0] == '@') {
                         // It's a private message
-                        char *username = msgOrUsername;
-                        char *message = msgOrNull;
+                        char *username = msgOrUsername + 1; // Skip the '@' character
+                        char *message = restOfMsg;
                         sendMessageToClient(clients, client, actual, username, message);
                      } else {
                         // It's a public message
-                        char *message = msgOrUsername;
+                        // Reconstruct message
+                        char message[BUF_SIZE];
+                        snprintf(message, BUF_SIZE, "%s %s", msgOrUsername, restOfMsg);
                         sendMessageToAllClients(clients, *client, actual, message, 0);
                      }
                   }
