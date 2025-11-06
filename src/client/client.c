@@ -27,13 +27,13 @@ void endClient(void)
 
 void appClient(const char *address, const char *name)
 {
-   SOCKET sock = init_connectionClient(address);
+   SOCKET sock = initConnectionClient(address);
    char buffer[BUF_SIZE];
 
    fd_set rdfs;
 
    /* send our name */
-   write_server(sock, name);
+   writeServer(sock, name);
 
    while(1)
    {
@@ -68,11 +68,11 @@ void appClient(const char *address, const char *name)
                buffer[BUF_SIZE - 1] = 0;
             }
          }
-         write_server(sock, buffer);
+         writeServer(sock, buffer);
       }
       else if(FD_ISSET(sock, &rdfs))
       {
-         int n = read_server(sock, buffer);
+         int n = readServer(sock, buffer);
          /* server down */
          if(n == 0)
          {
@@ -83,10 +83,10 @@ void appClient(const char *address, const char *name)
       }
    }
 
-   end_connection(sock);
+   endConnection(sock);
 }
 
-int init_connectionClient(const char *address)
+int initConnectionClient(const char *address)
 {
    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
    SOCKADDR_IN sin = { 0 };
@@ -118,12 +118,12 @@ int init_connectionClient(const char *address)
    return sock;
 }
 
-void end_connection(int sock)
+void endConnection(int sock)
 {
    closesocket(sock);
 }
 
-int read_server(SOCKET sock, char *buffer)
+int readServer(SOCKET sock, char *buffer)
 {
    int n = 0;
 
@@ -138,7 +138,7 @@ int read_server(SOCKET sock, char *buffer)
    return n;
 }
 
-void write_server(SOCKET sock, const char *buffer)
+void writeServer(SOCKET sock, const char *buffer)
 {
    if(send(sock, buffer, strlen(buffer), 0) < 0)
    {

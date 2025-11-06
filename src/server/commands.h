@@ -1,9 +1,9 @@
 #ifndef AWALE_GAME_SERVER_COMMANDS_H
 #define AWALE_GAME_SERVER_COMMANDS_H
 
-#include "gameLogic.h"
-#include "gameServer.h"
-#include "ihm.h"
+#include "../game/gameLogic.h"
+#include "../game/ihm.h"
+#include "serverUtils.h"
 
 int challenge(Client *clients, Client *challenger, int actual, char username[]);
 

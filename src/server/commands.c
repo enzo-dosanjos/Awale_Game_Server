@@ -1,24 +1,25 @@
 #include "commands.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 int challenge(Client *clients, Client *challenger, int actual, char username[]) {
     if (strcmp(challenger->username, username) == 0) {
         char msg[] = "Error: You cannot challenge yourself.";
-        write_client(challenger->sock, msg);
+        writeClient(challenger->sock, msg);
         return 0;
     }
 
     Client *challenged = findClientByUsername(clients, actual, username);
     if (challenged == NULL) {
         char msg[] = "Error: User not found.";
-        write_client(challenger->sock, msg);
+        writeClient(challenger->sock, msg);
         return 0;
     }
 
-    if (add_challenge(challenger, challenged) == 0) {
+    if (addChallenge(challenger, challenged) == 0) {
         return 0;
     }
 
@@ -34,24 +35,24 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     if (challengerClient == NULL) {
         // challenger not found
         char msg[] = "Error : challenger not found";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
     if (client->gameId != NULL) {
         char msg[] = "Error: You are already in a game.";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
     if (challengerClient->gameId != NULL) {
         char msg[] = "Error: Challenger is already in a game.";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
     // Remove the pending challenge
-    remove_challenge(challengerClient, client);
+    removeChallenge(challengerClient, client);
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
@@ -61,7 +62,7 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     sendMessageToClient(clients, NULL, actual, client->username, message);
 
     char rotationStr[2];
-    read_client(client->sock, rotationStr);
+    readClient(client->sock, rotationStr);
     int rotation = atoi(rotationStr);
 
     Game game = startGame(rotation);
@@ -83,9 +84,9 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
         strcpy(usernames[i], gameSession->players[i]->username);
     }
     printGridMessage(message, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
-    write_client(client->sock, message);
-    write_client(challengerClient->sock, message);
-    write_client(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
+    writeClient(client->sock, message);
+    writeClient(challengerClient->sock, message);
+    writeClient(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
 
     return 1;
 }
@@ -95,12 +96,12 @@ int declineChallenge(Client *clients, Client *client, int actual, char challenge
     if (challengerClient == NULL) {
         // challenger not found
         char msg[] = "Error : challenger not found";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
     // Remove the pending challenge
-    remove_challenge(challengerClient, client);
+    removeChallenge(challengerClient, client);
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_DECLINED_BY %s", client->username);
@@ -122,7 +123,7 @@ void seePendingReq(Client *client) {
             strncat(message, "\n", BUF_SIZE - strlen(message) - 1);
         }
     }
-    write_client(client->sock, message);
+    writeClient(client->sock, message);
 }
 
 void seeSentReq(Client *client) {
@@ -138,32 +139,32 @@ void seeSentReq(Client *client) {
             strncat(message, "\n", BUF_SIZE - strlen(message) - 1);
         }
     }
-    write_client(client->sock, message);
+    writeClient(client->sock, message);
 }
 
 void clearPendingReq(Client *client) {
-    clear_received_challenge(client);
+    clearReceivedChallenge(client);
     char msg[] = "All received pending challenges cleared.";
-    write_client(client->sock, msg);
+    writeClient(client->sock, msg);
 }
 
 void clearSentReq(Client *client) {
-    clear_sent_challenge(client);
+    clearSentChallenge(client);
     char msg[] = "All sent pending challenges cleared.";
-    write_client(client->sock, msg);
+    writeClient(client->sock, msg);
 }
 
 int removeSentReq(Client *clients, Client *client, int actual, char username[]) {
     Client *challengedClient = findClientByUsername(clients, actual, username);
     if (challengedClient == NULL) {
         char msg[] = "Error: User not found.";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
-    if (remove_challenge(client, challengedClient)) {
+    if (removeChallenge(client, challengedClient)) {
         char msg[] = "Pending challenge removed.";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
     }
 
     return 1;
@@ -189,7 +190,7 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
 
     if (client != gameSession->players[gameSession->currentPlayer]) {
         char msg[] = "Error: It's not your turn, please wait for the opponent to make their move.";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
     
@@ -199,13 +200,13 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
 
     if (!playMove(&gameSession->game, move)) {
         char msg[] = "Error: This is not legal. Please try again";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
     char movePlayed[BUF_SIZE] = "\0";
     sprintf(movePlayed, "%s played %d!\n", client->username, move.houseNum);
-    write_client(opponent->sock, movePlayed);
+    writeClient(opponent->sock, movePlayed);
 
     gameSession->currentPlayer = next;
 
@@ -215,8 +216,8 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
         strcpy(usernames[i], gameSession->players[i]->username);
     }
     printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
-    write_client(client->sock, grid);
-    write_client(opponent->sock, grid);
+    writeClient(client->sock, grid);
+    writeClient(opponent->sock, grid);
 
     return 1;
 }
@@ -244,7 +245,7 @@ int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame) {
     }
     
     Client *opponent = gameSession->players[nextPlayer(gameSession->currentPlayer)];
-    write_client(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?");
+    writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?");
 
     return 1;
 }
@@ -278,7 +279,7 @@ void handleEndgame(GameSession *gameSession) {
     printGameEndMessage(message, &gameSession->game, NUM_PLAYERS, winner, usernames);
     for (int i = 0; i < NUM_PLAYERS; i++) {
 
-    write_client(gameSession->players[i]->sock, message);
+    writeClient(gameSession->players[i]->sock, message);
     }
 
     freeGame(&gameSession->game);
@@ -317,7 +318,7 @@ void listClients(Client *clients, int actual, Client requester) {
 
         strncat(message, "\n",   BUF_SIZE - strlen(message) - 1);
     }
-    write_client(requester.sock, message);
+    writeClient(requester.sock, message);
 }
 
 void listGames(GameSession *gameSessions, int actualGame, Client requester) {
@@ -337,20 +338,20 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
             strncat(message, gameInfo, BUF_SIZE - strlen(message) - 1);
         }
     }
-    write_client(requester.sock, message);
+    writeClient(requester.sock, message);
 }
 
 void sendMP(Client *clients, int actual, char *username, char *message) {
     Client *client = findClientByUsername(clients, actual, username);
     if (client != NULL) {
-        write_client(client->sock, message);
+        writeClient(client->sock, message);
     }
 }
 
 void updateBio(Client *client, char bio[]) {
     strncpy(client->bio, bio, BUF_SIZE - 1);
     char msg[] = "Bio updated successfully.";
-    write_client(client->sock, msg);
+    writeClient(client->sock, msg);
 }
 
 int showBio(Client *clients, int actual, Client *requester, char username[]) {
@@ -361,7 +362,7 @@ int showBio(Client *clients, int actual, Client *requester, char username[]) {
         client = findClientByUsername(clients, actual, username);
         if (client == NULL) {
             char msg[] = "Error: User not found.";
-            write_client(requester->sock, msg);
+            writeClient(requester->sock, msg);
             return 0;
         }
 
@@ -377,7 +378,7 @@ int showBio(Client *clients, int actual, Client *requester, char username[]) {
 
             if (!found) {
                 char msg[] = "Error: This user's bio is private.";
-                write_client(requester->sock, msg);
+                writeClient(requester->sock, msg);
                 return 0;
             }
         }
@@ -385,7 +386,7 @@ int showBio(Client *clients, int actual, Client *requester, char username[]) {
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "Bio of %s:\n%s", client->username, client->bio);
-    write_client(requester->sock, message);
+    writeClient(requester->sock, message);
     return 1;
 }
 
@@ -396,7 +397,7 @@ int addFriend(Client *client, char username[]) {
     for (int i = 0; i < client->numFriends; i++) {
         if (strcmp(client->friends[i], username) == 0) {
             char msg[] = "Error: This user is already your friend.";
-            write_client(client->sock, msg);
+            writeClient(client->sock, msg);
             return 0;
         }
     }
@@ -404,7 +405,7 @@ int addFriend(Client *client, char username[]) {
     // check if friend list is full
     if (client->numFriends >= MAX_FRIENDS) {
         char msg[] = "Error: Friend list is full.";
-        write_client(client->sock, msg);
+        writeClient(client->sock, msg);
         return 0;
     }
 
@@ -417,5 +418,5 @@ int addFriend(Client *client, char username[]) {
 void setPrivacy(Client *client, int privacy) {
     client->private = privacy;
     char msg[] = "Privacy setting updated.";
-    write_client(client->sock, msg);
+    writeClient(client->sock, msg);
 }

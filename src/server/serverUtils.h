@@ -1,5 +1,5 @@
-#ifndef AWALE_GAME_SERVER_GAMESERVER_H
-#define AWALE_GAME_SERVER_GAMESERVER_H
+#ifndef AWALE_SERVER_UTILS_GAMESERVER_H
+#define AWALE_SERVER_UTILS_GAMESERVER_H
 
 
 #ifdef WIN32
@@ -25,17 +25,10 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
-#include "constants.h"
-#include "gameLogic.h"
+#include "../game/gameUtils.h"
+#include "../constants.h"
 
-#define CRLF        "\r\n"
-#define PORT         1977
-#define MAX_CLIENTS     100
-
-#define BUF_SIZE    1024
-
-#define MAX_PENDING_CHALLENGES 10
-#define MAX_FRIENDS 10
+#include <errno.h>
 
 
 typedef struct
@@ -68,20 +61,20 @@ typedef struct
 void initServer(void);
 void endServer(void);
 void appServer(void);
-int init_connectionServer(void);
-void end_connection(int sock);
-int read_client(SOCKET sock, char *buffer);
-void write_client(SOCKET sock, const char *buffer);
-void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
+int initConnectionServer(void);
+void endConnection(int sock);
+int readClient(SOCKET sock, char *buffer);
+void writeClient(SOCKET sock, const char *buffer);
+void sendMessageToAllClients(Client *clients, Client client, int actual, const char *buffer, char from_server);
 Client *findClientByUsername(Client *clients, int actual, char username[]);
 GameSession *findGameSessionByClient(Client *client, GameSession *gameSessions, int actualGame);
 void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer);
-void remove_client(Client *clients, int to_remove, int *actual);
-void clear_clients(Client *clients, int actual);
-int add_challenge(Client *challenger, Client *challenged);
-int remove_challenge(Client *client, Client *challenged);
-void clear_sent_challenge(Client *client);
-void clear_received_challenge(Client *client);
+void removeClient(Client *clients, int to_remove, int *actual);
+void clearClients(Client *clients, int actual);
+int addChallenge(Client *challenger, Client *challenged);
+int removeChallenge(Client *client, Client *challenged);
+void clearSentChallenge(Client *client);
+void clearReceivedChallenge(Client *client);
 
 
-#endif //AWALE_GAME_SERVER_GAMESERVER_H
+#endif //AWALE_SERVER_UTILS_GAMESERVER_H

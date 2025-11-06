@@ -1,5 +1,6 @@
-#ifndef AWALE_GAME_SERVER_CLIENT_H
-#define AWALE_GAME_SERVER_CLIENT_H
+#ifndef AWALE_GAME_SERVER_GAMESERVER_H
+#define AWALE_GAME_SERVER_GAMESERVER_H
+
 
 #ifdef WIN32
 
@@ -24,17 +25,16 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
-#define CRLF     "\r\n"
-#define PORT     1977
+#include "../constants.h"
+#include "commands.h"
+#include "serverUtils.h"
 
-#define BUF_SIZE 1024
+#include <errno.h>
 
-void initClient(void);
-void endClient(void);
-void appClient(const char *address, const char *name);
-int init_connectionClient(const char *address);
-void end_connection(int sock);
-int read_server(SOCKET sock, char *buffer);
-void write_server(SOCKET sock, const char *buffer);
 
-#endif //AWALE_GAME_SERVER_CLIENT_H
+void initServer(void);
+void endServer(void);
+void appServer(void);
+
+
+#endif //AWALE_GAME_SERVER_GAMESERVER_H

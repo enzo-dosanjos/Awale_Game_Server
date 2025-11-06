@@ -7,8 +7,9 @@ ClientTARGET := Client
 TARGET := $(ServTARGET) $(ClientTARGET)
 BUILD_DIR := build
 
-SERVSOURCES = gameLogic.c gameUtils.c ihm.c gameServer.c mainServer.c commands.c
-CLIENTSOURCES = client.c
+SERVSOURCES = src/game/gameLogic.c src/game/gameUtils.c src/game/ihm.c \
+			  src/server/gameServer.c src/server/mainServer.c src/server/commands.c src/server/serverUtils.c
+CLIENTSOURCES = src/client/client.c
 SERVOBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(SERVSOURCES))
 CLIENTOBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(CLIENTSOURCES))
 
