@@ -88,6 +88,9 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     printGridMessage(message, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, message);
     writeClient(challengerClient->sock, message);
+    for (int i = 0; i < gameSession->numViewers; i++) {
+        writeClient(gameSession->viewers[i]->sock, message);
+    }
     writeClient(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
 
     return 1;
@@ -215,6 +218,9 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
     printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, grid);
     writeClient(opponent->sock, grid);
+    for (int i = 0; i < gameSession->numViewers; i++) {
+        writeClient(gameSession->viewers[i]->sock, grid);
+    }
 
     if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES)) {
         handleEndgame(gameSession);
@@ -346,7 +352,111 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
     writeClient(requester.sock, message);
 }
 
-void sendMP(Client *clients, int actual, char *username, char *message) {
+int watchGame(Client *client, GameSession *gameSessions, int actualGame, int gameId) {
+    if (client->gameId != NULL) {
+        char msg[] = "Error: You cannot watch a game while playing in one.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    GameSession *gameSession = NULL;
+    for (int i = 0; i < actualGame; i++) {
+        if (gameSessions[i].id == gameId) {
+            gameSession = &gameSessions[i];
+            break;
+        }
+    }
+
+    if (gameSession == NULL) {
+        char msg[] = "Error: Game not found.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    if (gameSession->numViewers >= MAX_VIEWERS) {
+        char msg[] = "Error: Maximum number of viewers reached for this game.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    int private = 0;
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        if (gameSession->players[i]->private) {
+            private = 1;
+            break;;
+        }
+    }
+
+    if (private) {
+        int found = 0;
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            Client *player = gameSession->players[i];
+
+            for (int j = 0; j < player->numFriends; j++) {
+                if (strcmp(player->friends[j], client->username) == 0) {
+                    found = 1;
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            char msg[] = "Error: You cannot watch this private game.\n";
+            writeClient(client->sock, msg);
+            return 0;
+        }
+    }
+
+    gameSession->viewers[gameSession->numViewers] = client;
+    gameSession->numViewers++;
+
+    char msg[] = "You are now watching the game.\n";
+    writeClient(client->sock, msg);
+
+    return 1;
+}
+
+int SendMsgGame(GameSession *gameSession, Client *sender, char *message) {
+    if (gameSession == NULL) {
+        writeClient(sender->sock, "Error: You are not watching or playing any game.\n");
+        return 0;
+    }
+
+    int found = 0;
+    for (int i = 0; i < gameSession->numViewers; i++) {
+        Client *viewer = gameSession->viewers[i];
+        if (viewer->username == sender->username) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found && sender->gameId != NULL && *(sender->gameId) != gameSession->id) {
+        char msg[] = "Error: You are not part of this game.\n";
+        writeClient(sender->sock, msg);
+        return 0;
+    }
+
+    // Format message to add sender's name
+    char formattedMessage[BUF_SIZE];
+    snprintf(formattedMessage, BUF_SIZE, "%s (game chat): %s\n", sender->username, message);
+
+    // Send to viewers
+    for (int i = 0; i < gameSession->numViewers; i++) {
+        Client *recipient = gameSession->viewers[i];
+        writeClient(recipient->sock, formattedMessage);
+    }
+
+    // Send to players
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        Client *player = gameSession->players[i];
+        writeClient(player->sock, formattedMessage);
+    }
+
+    return 1;
+}
+
+void sendMP(Client *clients, Client *sender, int actual, char *username, char *message) {
     Client *client = findClientByUsername(clients, actual, username);
 
     // Format message to add sender's name

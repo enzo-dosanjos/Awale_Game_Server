@@ -43,4 +43,8 @@ int addFriend(Client *client, char username[]);
 
 void setPrivacy(Client *client, int privacy);
 
+int watchGame(Client *client, GameSession *gameSessions, int actualGame, int gameId);
+
+int SendMsgGame(GameSession *gameSession, Client *sender, char *message);
+
 #endif //AWALE_GAME_SERVER_COMMANDS_H

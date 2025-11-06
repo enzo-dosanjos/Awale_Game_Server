@@ -56,6 +56,9 @@ typedef struct
     Game game;
     int currentPlayer;
     int endGameSuggested;
+    // viewers
+    int numViewers;
+    Client *viewers[MAX_VIEWERS];
 } GameSession;
 
 void initServer(void);
@@ -75,6 +78,7 @@ int addChallenge(Client *challenger, Client *challenged);
 int removeChallenge(Client *client, Client *challenged);
 void clearSentChallenge(Client *client);
 void clearReceivedChallenge(Client *client);
+GameSession *findGameSessionByViewer(GameSession *gameSessions, int actualGame, Client *viewer);
 
 
 #endif //AWALE_SERVER_UTILS_GAMESERVER_H

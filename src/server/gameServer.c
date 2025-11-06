@@ -253,6 +253,29 @@ void appServer(void)
 
                      addFriend(client, username);
                   }
+                  else if (strcmp(command, "WATCH") == 0)
+                  {
+                     char *gameIdStr = strtok(NULL, "");
+                     if (gameIdStr == NULL) {
+                        char msg[] = "Error: No game ID provided to watch. Use: WATCH <game_id>\n";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+
+                     int gameId = atoi(gameIdStr);
+                     watchGame(client, gameSessions, actualGame, gameId);
+                  }
+                  else if (strcmp(command, "MSGGAME") == 0)
+                  {
+                     char *message = strtok(NULL, "");
+                     if (message == NULL) {
+                        char msg[] = "Error: No message provided for game chat. Use: MSGGAME <message>\n";
+                        writeClient(client->sock, msg);
+                        continue;
+                     }
+                     GameSession *actualGameSession = findGameSessionByViewer(gameSessions, actualGame, client);
+                     SendMsgGame(actualGameSession, client, message);
+                  }
                   else if (strcmp(command, "BIO") == 0)
                   {
                      char *bio = strtok(NULL, " ");

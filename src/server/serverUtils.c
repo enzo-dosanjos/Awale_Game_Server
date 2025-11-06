@@ -214,3 +214,21 @@ void clearSentChallenge(Client *client) {
 void clearReceivedChallenge(Client *client) {
    client->numPendingChallengesTo = 0;
 }
+
+GameSession *findGameSessionByViewer(GameSession *gameSessions, int actualGame, Client *viewer)
+{
+   for (int i = 0; i < actualGame; i++) {
+      for (int j = 0; j < gameSessions[i].numViewers; j++) {
+         if (gameSessions[i].viewers[j] == viewer) {
+            return &gameSessions[i];
+         }
+      }
+
+      for (int k = 0; k < NUM_PLAYERS; k++) {
+         if (gameSessions[i].players[k] == viewer) {
+            return &gameSessions[i];
+         }
+      }
+   }
+   return NULL; // Not found
+}
