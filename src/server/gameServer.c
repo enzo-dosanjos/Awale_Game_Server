@@ -130,7 +130,7 @@ void appServer(void)
                   {
                      char *username = strtok(NULL, " ");
                      if (username == NULL) {
-                        char msg[] = "Error: No username provided for challenge. Use: CHALLENGE <username>";
+                        char msg[] = "Error: No username provided for challenge. Use: CHALLENGE <username>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -141,7 +141,7 @@ void appServer(void)
                   {
                      char *username = strtok(NULL, " ");
                      if (username == NULL) {
-                        char msg[] = "Error: No username provided to accept challenge from. Use: ACCEPT <username>";
+                        char msg[] = "Error: No username provided to accept challenge from. Use: ACCEPT <username>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -156,7 +156,7 @@ void appServer(void)
                   {
                      char *username = strtok(NULL, " ");
                      if (username == NULL) {
-                        char msg[] = "Error: No username provided to decline challenge from. Use: DECLINE <username>";
+                        char msg[] = "Error: No username provided to decline challenge from. Use: DECLINE <username>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -191,7 +191,7 @@ void appServer(void)
                   {
                      char *username = strtok(NULL, " ");
                      if (username == NULL) {
-                        char msg[] = "Error: No username provided to remove sent challenge to. Use: REMOVESENTREQ <username>";
+                        char msg[] = "Error: No username provided to remove sent challenge to. Use: REMOVESENTREQ <username>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -202,7 +202,7 @@ void appServer(void)
                   {
                      char *houseChar = strtok(NULL, " ");
                      if (houseChar == NULL) {
-                        char msg[] = "Error: No house number provided for move. Use: MOVE <house_number>";
+                        char msg[] = "Error: No house number provided for move. Use: MOVE <house_number>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -223,7 +223,7 @@ void appServer(void)
                      // check if it's a private message by checking the number of tokens
                      char *msgOrUsername = strtok(NULL, " ");
                      if (msgOrUsername == NULL) {
-                        char msg[] = "Error: No message provided. Use: MSG <message> or MSG @<username> <message>";
+                        char msg[] = "Error: No message provided. Use: MSG <message> or MSG @<username> <message>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -246,7 +246,7 @@ void appServer(void)
                   {
                      char *username = strtok(NULL, " ");
                      if (username == NULL) {
-                        char msg[] = "Error: No username provided to add as friend. Use: ADDFRIEND <username>";
+                        char msg[] = "Error: No username provided to add as friend. Use: ADDFRIEND <username>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -257,7 +257,7 @@ void appServer(void)
                   {
                      char *bio = strtok(NULL, " ");
                      if (bio == NULL) {
-                        char msg[] = "Error: No bio provided. Use: BIO <your_bio>";
+                        char msg[] = "Error: No bio provided. Use: BIO <your_bio>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
@@ -275,7 +275,7 @@ void appServer(void)
                   {
                      char *privacyStr = strtok(NULL, " ");
                      if (privacyStr == NULL) {
-                        char msg[] = "Error: No privacy setting provided. Use: SETPRIVACY <true|false>";
+                        char msg[] = "Error: No privacy setting provided. Use: SETPRIVACY <true|false>\n";
                         writeClient(client->sock, msg);
                         continue;
                      }

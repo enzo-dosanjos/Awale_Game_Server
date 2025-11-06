@@ -7,14 +7,14 @@
 
 int challenge(Client *clients, Client *challenger, int actual, char username[]) {
     if (strcmp(challenger->username, username) == 0) {
-        char msg[] = "Error: You cannot challenge yourself.";
+        char msg[] = "Error: You cannot challenge yourself.\n";
         writeClient(challenger->sock, msg);
         return 0;
     }
 
     Client *challenged = findClientByUsername(clients, actual, username);
     if (challenged == NULL) {
-        char msg[] = "Error: User not found.";
+        char msg[] = "Error: User not found.\n";
         writeClient(challenger->sock, msg);
         return 0;
     }
@@ -34,19 +34,19 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     Client *challengerClient = findClientByUsername(clients, actual, challenger);
     if (challengerClient == NULL) {
         // challenger not found
-        char msg[] = "Error : challenger not found";
+        char msg[] = "Error : challenger not found\n";
         writeClient(client->sock, msg);
         return 0;
     }
 
     if (client->gameId != NULL) {
-        char msg[] = "Error: You are already in a game.";
+        char msg[] = "Error: You are already in a game.\n";
         writeClient(client->sock, msg);
         return 0;
     }
 
     if (challengerClient->gameId != NULL) {
-        char msg[] = "Error: Challenger is already in a game.";
+        char msg[] = "Error: Challenger is already in a game.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -60,7 +60,7 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
     sendMessageToClient(clients, NULL, actual, challenger, message);
 
-    strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
+    strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): \n");
     sendMessageToClient(clients, NULL, actual, client->username, message);
 
     char rotationStr[2];
@@ -97,7 +97,7 @@ int declineChallenge(Client *clients, Client *client, int actual, char challenge
     Client *challengerClient = findClientByUsername(clients, actual, challenger);
     if (challengerClient == NULL) {
         // challenger not found
-        char msg[] = "Error : challenger not found";
+        char msg[] = "Error : challenger not found\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -146,26 +146,26 @@ void seeSentReq(Client *client) {
 
 void clearPendingReq(Client *client) {
     clearReceivedChallenge(client);
-    char msg[] = "All received pending challenges cleared.";
+    char msg[] = "All received pending challenges cleared.\n";
     writeClient(client->sock, msg);
 }
 
 void clearSentReq(Client *client) {
     clearSentChallenge(client);
-    char msg[] = "All sent pending challenges cleared.";
+    char msg[] = "All sent pending challenges cleared.\n";
     writeClient(client->sock, msg);
 }
 
 int removeSentReq(Client *clients, Client *client, int actual, char username[]) {
     Client *challengedClient = findClientByUsername(clients, actual, username);
     if (challengedClient == NULL) {
-        char msg[] = "Error: User not found.";
+        char msg[] = "Error: User not found.\n";
         writeClient(client->sock, msg);
         return 0;
     }
 
     if (removeChallenge(client, challengedClient)) {
-        char msg[] = "Pending challenge removed.";
+        char msg[] = "Pending challenge removed.\n";
         writeClient(client->sock, msg);
     }
 
@@ -186,7 +186,7 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
     move.houseNum = house;
 
     if (client != gameSession->players[gameSession->currentPlayer]) {
-        char msg[] = "Error: It's not your turn, please wait for the opponent to make their move.";
+        char msg[] = "Error: It's not your turn, please wait for the opponent to make their move.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -196,7 +196,7 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
     move.numPlayer = gameSession->currentPlayer;
 
     if (!playMove(&gameSession->game, move)) {
-        char msg[] = "Error: This is not legal. Please try again";
+        char msg[] = "Error: This is not legal. Please try again\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -246,7 +246,7 @@ int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame) {
     }
     
     Client *opponent = gameSession->players[nextPlayer(gameSession->currentPlayer)];
-    writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?");
+    writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?\n");
 
     return 1;
 }
@@ -355,7 +355,7 @@ void sendMP(Client *clients, int actual, char *username, char *message) {
 
 void updateBio(Client *client, char bio[]) {
     strncpy(client->bio, bio, BUF_SIZE - 1);
-    char msg[] = "Bio updated successfully.";
+    char msg[] = "Bio updated successfully.\n";
     writeClient(client->sock, msg);
 }
 
@@ -366,7 +366,7 @@ int showBio(Client *clients, int actual, Client *requester, char username[]) {
     } else {
         client = findClientByUsername(clients, actual, username);
         if (client == NULL) {
-            char msg[] = "Error: User not found.";
+            char msg[] = "Error: User not found.\n";
             writeClient(requester->sock, msg);
             return 0;
         }
@@ -382,7 +382,7 @@ int showBio(Client *clients, int actual, Client *requester, char username[]) {
             }
 
             if (!found) {
-                char msg[] = "Error: This user's bio is private.";
+                char msg[] = "Error: This user's bio is private.\n";
                 writeClient(requester->sock, msg);
                 return 0;
             }
@@ -401,7 +401,7 @@ int addFriend(Client *client, char username[]) {
     // check if already friends
     for (int i = 0; i < client->numFriends; i++) {
         if (strcmp(client->friends[i], username) == 0) {
-            char msg[] = "Error: This user is already your friend.";
+            char msg[] = "Error: This user is already your friend.\n";
             writeClient(client->sock, msg);
             return 0;
         }
@@ -409,7 +409,7 @@ int addFriend(Client *client, char username[]) {
 
     // check if friend list is full
     if (client->numFriends >= MAX_FRIENDS) {
-        char msg[] = "Error: Friend list is full.";
+        char msg[] = "Error: Friend list is full.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -422,6 +422,6 @@ int addFriend(Client *client, char username[]) {
 
 void setPrivacy(Client *client, int privacy) {
     client->private = privacy;
-    char msg[] = "Privacy setting updated.";
+    char msg[] = "Privacy setting updated.\n";
     writeClient(client->sock, msg);
 }
