@@ -180,11 +180,6 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
         return 0;
     }
 
-    if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES)) {
-        handleEndgame(gameSession);
-        return 1;
-    }
-
     Move move;
     move.houseNum = house;
 
@@ -218,6 +213,10 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
     printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, grid);
     writeClient(opponent->sock, grid);
+
+    if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES)) {
+        handleEndgame(gameSession);
+    }
 
     return 1;
 }

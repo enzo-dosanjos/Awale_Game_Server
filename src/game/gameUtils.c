@@ -108,27 +108,24 @@ void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers, int nbHouse
     int houseInd = move.numPlayer * nbHouses + move.houseNum;
     int numSeeds = game->grid[move.numPlayer][move.houseNum];
 
-    gameGrid[houseInd] = 0;
-
     int i;
     int skip = numSeeds / (nbHouses * nbPlayers);
     for (i = houseInd + 1; i < houseInd + 1 + numSeeds + skip; i++)
     {
-        if (i % (nbHouses * nbPlayers) != houseInd)
-        {
-            gameGrid[i % (nbHouses * nbPlayers)]++;
-        }
+        gameGrid[i % (nbHouses * nbPlayers)]++;
     }
+    
+    gameGrid[houseInd] = 0;
 
     if (capturesOk)
     {
         i = (i - 1) % (nbHouses * nbPlayers);
 
-        while ((gameGrid[i] == 2 || gameGrid[i] == 3) & (i % nbHouses != move.numPlayer))
+        while ((i / nbHouses != move.numPlayer) && (gameGrid[i] == 2 || gameGrid[i] == 3))
         {
             game->scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
-            i -= 1;
+            i = (i - 1) % (nbHouses * nbPlayers);
         }
     }
 }
