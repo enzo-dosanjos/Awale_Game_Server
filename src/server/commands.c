@@ -52,7 +52,9 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     }
 
     // Remove the pending challenge
-    removeChallenge(challengerClient, client);
+    if (removeChallenge(challengerClient, client) == 0) {
+        return 0;
+    }
 
     char message[BUF_SIZE];
     snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);

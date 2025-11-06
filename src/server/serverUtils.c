@@ -187,7 +187,7 @@ int removeChallenge(Client *client, Client *challenged) {
 
    if (!found) {
       char msg[] = "Error: No pending challenge from that user.";
-      writeClient(client->sock, msg);
+      writeClient(challenged->sock, msg);
       return 0;
    }
 
