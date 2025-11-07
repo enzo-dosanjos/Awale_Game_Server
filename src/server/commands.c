@@ -121,7 +121,7 @@ int challenge(Client **connectedClients, Client *challenger, int actualConnected
     return 1;
 }
 
-int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSession) {
+int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSessions, int *numGames, GameSession **activeGameSessions, int *numActiveGames) {
     Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL) {
         // challenger not found
@@ -138,6 +138,12 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
 
     if (challengerClient->gameId != NULL) {
         char msg[] = "Error: Challenger is already in a game.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    if (*numActiveGames > MAX_ACTIVE_GAMES - 1 || *numGames > MAX_GAMES - 1) {
+        char msg[] = "Error: Too many active games. Please wait.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -160,29 +166,36 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
 
     Game game = startGame(rotation);
 
-    gameSession->game = game;
-    gameSession->currentPlayer = playerSelector();
+    GameSession gameSession;
+    gameSession.game = game;
+    gameSession.currentPlayer = playerSelector();
 
-    gameSession->players[0] = challengerClient;
-    gameSession->players[1] = client;
-    gameSession->id = (int) time(NULL);  // timestamp
-    gameSession->endGameSuggested = -1;
+    gameSession.players[0] = challengerClient;
+    gameSession.players[1] = client;
+    gameSession.id = (int) time(NULL);  // timestamp
+    gameSession.endGameSuggested = -1;
+    gameSession.numViewers = 0;
 
-    challengerClient->gameId = &gameSession->id;
-    client->gameId = &gameSession->id;
+    gameSessions[*numGames] = gameSession;
+    activeGameSessions[*numActiveGames] = &gameSessions[*numGames];
+    (*numGames)++;
+    (*numActiveGames)++;
+
+    challengerClient->gameId = &gameSessions[(*numGames)-1].id;
+    client->gameId = &gameSessions[(*numGames)-1].id;
 
     message[0] = '\0';
     char usernames[NUM_PLAYERS][BUF_SIZE];
     for (int i = 0; i < NUM_PLAYERS; i++) {
-        strcpy(usernames[i], gameSession->players[i]->username);
+        strcpy(usernames[i], gameSession.players[i]->username);
     }
-    printGridMessage(message, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
+    printGridMessage(message, &gameSession.game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, message);
     writeClient(challengerClient->sock, message);
-    for (int i = 0; i < gameSession->numViewers; i++) {
-        writeClient(gameSession->viewers[i]->sock, message);
+    for (int i = 0; i < gameSession.numViewers; i++) {
+        writeClient(gameSession.viewers[i]->sock, message);
     }
-    writeClient(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
+    writeClient(gameSession.players[gameSession.currentPlayer]->sock, "It's your turn to shine!\n");
 
     return 1;
 }

@@ -140,11 +140,7 @@ void appServer(void)
                         continue;
                      }
 
-                     GameSession newGameSession;
-                     if (acceptChallenge(connectedClients, client, actualConnected, username, &newGameSession)) {
-                        gameSessions[actualGame] = newGameSession;
-                        actualGame++;
-                     }
+                     acceptChallenge(connectedClients, client, actualConnected, username, gameSessions, &numGames, activeGameSessions, &numActiveGames);
                   }
                   else if (strcmp(command, "DECLINE") == 0)
                   {

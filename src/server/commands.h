@@ -11,7 +11,7 @@ int login(Client *clients, int *actualClient, Client **connectedClients, int *ac
 
 int challenge(Client **connectedClients, Client *challenger, int actualConnected, char username[]);
 
-int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSession);
+int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSessions, int *numGames, GameSession **activeGameSessions, int *numActiveGames);
 
 int declineChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[]);
 
