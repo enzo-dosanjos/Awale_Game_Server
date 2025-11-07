@@ -5,11 +5,15 @@
 #include "../game/ihm.h"
 #include "serverUtils.h"
 
-int challenge(Client *clients, Client *challenger, int actual, char username[]);
+int signUp(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password);
 
-int acceptChallenge(Client *clients, Client *client, int actual, char challenger[], GameSession *gameSession);
+int login(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password);
 
-int declineChallenge(Client *clients, Client *client, int actual, char challenger[]);
+int challenge(Client **connectedClients, Client *challenger, int actualConnected, char username[]);
+
+int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSession);
+
+int declineChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[]);
 
 int move(Client *client, GameSession *gameSessions, int actualGame, int house);
 
@@ -19,7 +23,7 @@ int acceptEndgame(Client *client, GameSession *gameSessions, int actualGame);
 
 void handleEndgame(GameSession *gameSession);
 
-void listClients(Client *clients, int actual, Client requester);
+void listClients(Client **connectedClients, int actualConnected, Client requester);
 
 void listGames(GameSession *gameSessions, int actualGame, Client requester);
 
@@ -31,13 +35,13 @@ void clearPendingReq(Client *client);
 
 void clearSentReq(Client *client);
 
-int removeSentReq(Client *clients, Client *client, int actual, char username[]);
+int removeSentReq(Client **connectedClients, Client *client, int actualConnected, char username[]);
 
-void sendMP(Client *clients, Client *sender, int actual, char *username, char *message);
+void sendMP(Client **connectedClients, Client *sender, int actualConnected, char *username, char *message);
 
 void updateBio(Client *client, char bio[]);
 
-int showBio(Client *clients, int actual, Client *requester, char username[]);
+int showBio(Client **connectedClients, int actualConnected, Client *requester, char username[]);
 
 int addFriend(Client *client, char username[]);
 

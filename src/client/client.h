@@ -31,7 +31,7 @@ typedef struct in_addr IN_ADDR;
 
 void initClient(void);
 void endClient(void);
-void appClient(const char *address, const char *name);
+void appClient(const char *address);
 int initConnectionClient(const char *address);
 void endConnection(int sock);
 int readServer(SOCKET sock, char *buffer);

@@ -30,11 +30,15 @@ void appServer(void)
    SOCKET sock = initConnectionServer();
    char buffer[BUF_SIZE];
    /* the index for the array */
-   int actual = 0;
+   int actualClient = 0;
+   int actualConnected = 0;
+   int actualLobby = 0;
    int max = sock;
    int actualGame = 0;
    /* an array for all clients */
+   SOCKET lobby[MAX_CONNECTED_CLIENTS];
    Client clients[MAX_CLIENTS];
+   Client *connectedClients[MAX_CONNECTED_CLIENTS];
    GameSession gameSessions[MAX_CLIENTS / 2];
 
    fd_set rdfs;
@@ -50,10 +54,16 @@ void appServer(void)
       /* add the connection socket */
       FD_SET(sock, &rdfs);
 
-      /* add socket of each client */
-      for(i = 0; i < actual; i++)
+      /* add socket of each player in the lobby */
+      for(i = 0; i < actualLobby; i++)
       {
-         FD_SET(clients[i].sock, &rdfs);
+         FD_SET(lobby[i], &rdfs);
+      }
+
+      /* add socket of each connected player */
+      for(i = 0; i < actualConnected; i++)
+      {
+         FD_SET(connectedClients[i]->sock, &rdfs);
       }
 
       if(select(max + 1, &rdfs, NULL, NULL, NULL) == -1)
@@ -80,48 +90,35 @@ void appServer(void)
             continue;
          }
 
-         /* after connecting the client sends its name */
-         if(readClient(csock, buffer) == -1)
-         {
-            /* disconnected */
-            continue;
-         }
-
-         /* what is the new maximum fd ? */
          max = csock > max ? csock : max;
-
          FD_SET(csock, &rdfs);
 
-         Client c;
-         c.sock = csock;
-         strncpy(c.username, buffer, BUF_SIZE - 1);
-         c.gameId = NULL;
-         c.numFriends = 0;
-         c.numPendingChallengesTo = 0;
-         c.numPendingChallengesFrom = 0;
-         c.bio[0] = '\0';
-         c.private = 0;
-         clients[actual] = c;
-         actual++;
+         lobby[actualLobby] = csock;
+         actualLobby++;
+
+
+         char msg[] = "Bienvenue dans le lobby !\n";
+         writeClient(csock, msg);
       }
       else
       {
          int i = 0;
-         for(i = 0; i < actual; i++)
+         for(i = 0; i < actualConnected; i++)
          {
             /* a client is talking */
-            if(FD_ISSET(clients[i].sock, &rdfs))
+            if(FD_ISSET(connectedClients[i]->sock, &rdfs))
             {
-               Client *client = &clients[i];
-               int c = readClient(clients[i].sock, buffer);
+               Client *client = connectedClients[i];
+               int c = readClient(client->sock, buffer);
                /* client disconnected */
                if(c == 0)
                {
-                  closesocket(clients[i].sock);
+                  closesocket(connectedClients[i]->sock);
+                  connectedClients[i]->sock = -1;
                   strncpy(buffer, client->username, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  removeClient(clients, i, &actual);
-                  sendMessageToAllClients(clients, client->username, actual, buffer, 1);
+                  removeClient(connectedClients, i, &actualConnected);
+                  sendMessageToAllClients(connectedClients, client->username, actualConnected, buffer, 1);
                }
                else
                {
@@ -135,7 +132,7 @@ void appServer(void)
                         continue;
                      }
 
-                     challenge(clients, client, actual, username);
+                     challenge(connectedClients, client, actualConnected, username);
                   }
                   else if (strcmp(command, "ACCEPT") == 0)
                   {
@@ -147,7 +144,7 @@ void appServer(void)
                      }
 
                      GameSession newGameSession;
-                     if (acceptChallenge(clients, client, actual, username, &newGameSession)) {
+                     if (acceptChallenge(connectedClients, client, actualConnected, username, &newGameSession)) {
                         gameSessions[actualGame] = newGameSession;
                         actualGame++;
                      }
@@ -161,11 +158,11 @@ void appServer(void)
                         continue;
                      }
 
-                     declineChallenge(clients, client, actual, username);
+                     declineChallenge(connectedClients, client, actualConnected, username);
                   }
                   else if (strcmp(command, "LIST") == 0)
                   {
-                     listClients(clients, actual, *client);
+                     listClients(connectedClients, actualConnected, *client);
                   }
                   else if (strcmp(command, "LISTGAMES") == 0)
                   {
@@ -196,7 +193,7 @@ void appServer(void)
                         continue;
                      }
 
-                     removeSentReq(clients, client, actual, username);
+                     removeSentReq(connectedClients, client, actualConnected, username);
                   }
                   else if (strcmp(command, "MOVE") == 0)
                   {
@@ -233,13 +230,13 @@ void appServer(void)
                         // It's a private message
                         char *username = msgOrUsername + 1; // Skip the '@' character
                         char *message = restOfMsg;
-                        sendMP(clients, client, actual, username, message);
+                        sendMP(connectedClients, client, actualConnected, username, message);
                      } else {
                         // It's a public message
                         // Reconstruct message
                         char message[BUF_SIZE];
                         snprintf(message, BUF_SIZE, "%s %s", msgOrUsername, restOfMsg);
-                        sendMessageToAllClients(clients, client->username, actual, message, 0);
+                        sendMessageToAllClients(connectedClients, client->username, actualConnected, message, 0);
                      }
                   }
                   else if (strcmp(command, "ADDFRIEND") == 0)
@@ -292,7 +289,7 @@ void appServer(void)
                      char *username = strtok(NULL, " ");
                      // username can be NULL here to show own bio
 
-                     showBio(clients, actual, client, username);
+                     showBio(connectedClients, actualConnected, client, username);
                   }
                   else if (strcmp(command, "SETPRIVACY") == 0)
                   {
@@ -313,9 +310,55 @@ void appServer(void)
                break;
             }
          }
+
+         for (i = 0; i < actualLobby; i++)
+         {
+            if(FD_ISSET(lobby[i], &rdfs))
+            {
+               int c = readClient(lobby[i], buffer);
+               /* client disconnected */
+               if(c == 0)
+               {
+                  closesocket(lobby[i]);
+               }
+               else
+               {
+                  char *command = strtok(buffer, " ");
+                  if (strcmp(command, "MSG") == 0)
+                  {
+                     char *msg = strtok(NULL, "");
+                     sendMessageToLobby(lobby, actualLobby, msg);
+                  }
+                  else if (strcmp(command, "LOGIN") == 0)
+                  {
+                     char *username = strtok(NULL, " ");
+                     char *password = strtok(NULL, "");
+                     if (username == NULL || password == NULL) {
+                        char msg[] = "Error: No username or password provided. Use: MSG <username> <password>\n";
+                        writeClient(lobby[i], msg);
+                        continue;
+                     }
+
+                     login(clients, &actualClient, connectedClients, &actualConnected, lobby, &actualLobby, i, username, password);
+                  }
+                  else if (strcmp(command, "SIGNUP") == 0)
+                  {
+                     char *username = strtok(NULL, " ");
+                     char *password = strtok(NULL, "");
+                     if (username == NULL || password == NULL) {
+                        char msg[] = "Error: No username or password provided. Use: MSG <username> <password>\n";
+                        writeClient(lobby[i], msg);
+                        continue;
+                     }
+
+                     signUp(clients, &actualClient, connectedClients, &actualConnected, lobby, &actualLobby, i, username, password);
+                  }
+               }
+            }
+         }
       }
    }
 
-   clearClients(clients, actual);
+   clearClients(connectedClients, actualConnected);
    endConnection(sock);
 }

@@ -40,24 +40,30 @@ void endConnection(int sock)
    closesocket(sock);
 }
 
-void clearClients(Client *clients, int actual)
+void clearClients(Client **connectedClients, int actualConnected)
 {
    int i = 0;
-   for(i = 0; i < actual; i++)
+   for(i = 0; i < actualConnected; i++)
    {
-      closesocket(clients[i].sock);
+      closesocket(connectedClients[i]->sock);
    }
 }
 
-void removeClient(Client *clients, int to_remove, int *actual)
+void removeClient(Client **connectedClients, int to_remove, int *actualConnected)
 {
    /* we remove the client in the array */
-   memmove(clients + to_remove, clients + to_remove + 1, (*actual - to_remove - 1) * sizeof(Client));
+   memmove(connectedClients + to_remove, connectedClients + to_remove + 1, (*actualConnected - to_remove - 1) * sizeof(Client *));
    /* number client - 1 */
-   (*actual)--;
+   (*actualConnected)--;
 }
 
-void sendMessageToAllClients(Client *clients, char sender[], int actual, const char *buffer, char from_server)
+void removeFromLobby(SOCKET *lobby, int to_remove, int *actualLobby)
+{
+   memmove(lobby + to_remove, lobby + to_remove + 1, (*lobby - to_remove - 1) * sizeof(SOCKET));
+   (*actualLobby)--;
+}
+
+void sendMessageToAllClients(Client **connectedClients, char sender[], int actualConnected, const char *buffer, char from_server)
 {
    int i = 0;
    char message[BUF_SIZE];
@@ -69,20 +75,30 @@ void sendMessageToAllClients(Client *clients, char sender[], int actual, const c
       strncat(message, " : ", sizeof message - strlen(message) - 1);
    }
    strncat(message, buffer, sizeof message - strlen(message) - 1);
-   
-   for(i = 0; i < actual; i++)
+
+   for(i = 0; i < actualConnected; i++)
    {
-      writeClient(clients[i].sock, message);
+      if (connectedClients[i] != NULL) {
+         writeClient(connectedClients[i]->sock, message);
+      }
    }
 }
 
-Client *findClientByUsername(Client *clients, int actual, char username[])
+void sendMessageToLobby(SOCKET *lobby, int actualLobby, const char *message)
 {
-   for (int i = 0; i < actual; i++)
+   for (int i = 0; i < actualLobby; i++)
    {
-      if (strcmp(clients[i].username, username) == 0)
+      writeClient(lobby[i], message);
+   }
+}
+
+Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[])
+{
+   for (int i = 0; i < actualConnected; i++)
+   {
+      if (strcmp(connectedClients[i]->username, username) == 0)
       {
-         return &clients[i];
+         return connectedClients[i];
       }
    }
    return NULL; // Not found
@@ -99,7 +115,7 @@ GameSession *findGameSessionByClient(Client *client, GameSession *gameSessions, 
    return &(gameSessions[i]);
 }
 
-void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer)
+void sendMessageToClient(Client **connectedClients, Client *sender, int actualConnected, char username[], const char *buffer)
 {
    char message[BUF_SIZE];
    message[0] = '\0';
@@ -108,7 +124,7 @@ void sendMessageToClient(Client *clients, Client *sender, int actual, char usern
       strncat(message, " : ", sizeof message - strlen(message) - 1);
    }
 
-   Client *client = findClientByUsername(clients, actual, username);
+   Client *client = findClientByUsername(connectedClients, actualConnected, username);
    if (client != NULL) {
       strncat(message, buffer, sizeof message - strlen(message) - 1);
       writeClient(client->sock, message);

@@ -35,6 +35,7 @@ typedef struct
 {
     SOCKET sock;
     char username[BUF_SIZE];
+    char password[BUF_SIZE];
     char bio[BUF_SIZE];
     int private;
     int *gameId;
@@ -68,12 +69,14 @@ int initConnectionServer(void);
 void endConnection(int sock);
 int readClient(SOCKET sock, char *buffer);
 void writeClient(SOCKET sock, const char *buffer);
-void sendMessageToAllClients(Client *clients, char sender[], int actual, const char *buffer, char from_server);
-Client *findClientByUsername(Client *clients, int actual, char username[]);
+void sendMessageToAllClients(Client **connectedClients, char sender[], int actualConnected, const char *buffer, char from_server);
+Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[]);
 GameSession *findGameSessionByClient(Client *client, GameSession *gameSessions, int actualGame);
-void sendMessageToClient(Client *clients, Client *sender, int actual, char username[], const char *buffer);
-void removeClient(Client *clients, int to_remove, int *actual);
-void clearClients(Client *clients, int actual);
+void sendMessageToClient(Client **connectedClients, Client *sender, int actualConnected, char username[], const char *buffer);
+void sendMessageToLobby(SOCKET *lobby, int actualLobby, const char *buffer);
+void removeClient(Client **connectedClients, int to_remove, int *actualConnected);
+void removeFromLobby(SOCKET *lobby, int to_remove, int *actualLobby);
+void clearClients(Client **connectedClients, int actualConnected);
 int addChallenge(Client *challenger, Client *challenged);
 int removeChallenge(Client *client, Client *challenged);
 void clearSentChallenge(Client *client);

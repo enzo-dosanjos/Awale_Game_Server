@@ -5,14 +5,105 @@
 #include <string.h>
 #include <time.h>
 
-int challenge(Client *clients, Client *challenger, int actual, char username[]) {
+int signUp(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password) {
+    if (*actualClient >= MAX_CLIENTS - 1) {
+        char msg[] = "Error: Too many players.\n";
+        writeClient(lobby[index], msg);
+        return 0;
+    }
+    
+    for (int i = 0; i < *actualClient; i++) {
+        if (strcmp(clients[i].username, username) == 0) {
+            char msg[] = "Error: Username is already in use.\n";
+            writeClient(lobby[index], msg);
+            return 0;
+        }
+    }
+
+    clients[*actualClient].sock = lobby[index];
+    strncpy(clients[*actualClient].username, username, BUF_SIZE - 1);
+    strncpy(clients[*actualClient].password, password, BUF_SIZE - 1);
+    clients[*actualClient].gameId = NULL;
+    clients[*actualClient].numFriends = 0;
+    clients[*actualClient].numPendingChallengesTo = 0;
+    clients[*actualClient].numPendingChallengesFrom = 0;
+    clients[*actualClient].bio[0] = '\0';
+    clients[*actualClient].private = 0;
+
+    connectedClients[*actualConnected] = &clients[*actualClient];
+    (*actualClient)++;
+    (*actualConnected)++;
+
+    char msg[BUF_SIZE] = "\0";
+    sprintf(msg, "Welcome, %s! You can now challenge your first opponent!\n", username);
+    writeClient(lobby[index], msg);
+
+    removeFromLobby(lobby, index, actualLobby);
+
+    return 1;
+}
+
+int login(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password) {
+    if (*actualConnected >= MAX_CONNECTED_CLIENTS - 1) {
+        char msg[] = "Error: Too many simultaneous connections. Please wait.\n";
+        writeClient(lobby[index], msg);
+        return 0;
+    }
+
+    int i = 0;
+    int usernameFound = 0;
+    int passwordOkay = 0;
+
+    for (i = 0; i < *actualClient; i++) {
+        if (strcmp(clients[i].username, username) == 0) {
+            usernameFound = 1;
+            if (strcmp(clients[i].password, password) == 0) {
+                passwordOkay = 1;
+            }
+            break;
+        }
+    }
+
+    if (!usernameFound) {
+        char msg[] = "Error: Username not found.\n";
+        writeClient(lobby[index], msg);
+        return 0;
+    }
+
+    if (usernameFound && !passwordOkay) {
+        char msg[] = "Error: Wrong password.\n";
+        writeClient(lobby[index], msg);
+        return 0;
+    }
+
+    if (clients[i].sock >= 0) {
+        char msg[] = "You've been disconnected because of a connection on another device.\n";
+        writeClient(clients[i].sock, msg);
+        removeClient(connectedClients, i, actualConnected);
+    }
+
+    clients[i].sock = lobby[index];
+
+    connectedClients[*actualConnected] = &clients[i];
+    (*actualConnected)++;
+
+    char msg[BUF_SIZE] = "\0";
+    sprintf(msg, "Welcome back, %s!\n", username);
+    writeClient(lobby[index], msg);
+
+    removeFromLobby(lobby, index, actualLobby);
+
+    return 1;
+}
+
+int challenge(Client **connectedClients, Client *challenger, int actualConnected, char username[]) {
     if (strcmp(challenger->username, username) == 0) {
         char msg[] = "Error: You cannot challenge yourself.\n";
         writeClient(challenger->sock, msg);
         return 0;
     }
 
-    Client *challenged = findClientByUsername(clients, actual, username);
+    Client *challenged = findClientByUsername(connectedClients, actualConnected, username);
     if (challenged == NULL) {
         char msg[] = "Error: User not found.\n";
         writeClient(challenger->sock, msg);
@@ -30,8 +121,8 @@ int challenge(Client *clients, Client *challenger, int actual, char username[]) 
     return 1;
 }
 
-int acceptChallenge(Client *clients, Client *client, int actual, char challenger[], GameSession *gameSession) {
-    Client *challengerClient = findClientByUsername(clients, actual, challenger);
+int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSession) {
+    Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL) {
         // challenger not found
         char msg[] = "Error : challenger not found\n";
@@ -96,8 +187,8 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
     return 1;
 }
 
-int declineChallenge(Client *clients, Client *client, int actual, char challenger[]) {
-    Client *challengerClient = findClientByUsername(clients, actual, challenger);
+int declineChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[]) {
+    Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL) {
         // challenger not found
         char msg[] = "Error : challenger not found\n";
@@ -159,8 +250,8 @@ void clearSentReq(Client *client) {
     writeClient(client->sock, msg);
 }
 
-int removeSentReq(Client *clients, Client *client, int actual, char username[]) {
-    Client *challengedClient = findClientByUsername(clients, actual, username);
+int removeSentReq(Client **connectedClients, Client *client, int actualConnected, char username[]) {
+    Client *challengedClient = findClientByUsername(connectedClients, actualConnected, username);
     if (challengedClient == NULL) {
         char msg[] = "Error: User not found.\n";
         writeClient(client->sock, msg);
@@ -296,24 +387,24 @@ void handleEndgame(GameSession *gameSession) {
     freeGame(&gameSession->game);
 }
 
-void listClients(Client *clients, int actual, Client requester) {
+void listClients(Client **connectedClients, int actualConnected, Client requester) {
     char message[BUF_SIZE];
     message[0] = '\0';
     strncat(message, "Connected users:\n", BUF_SIZE - strlen(message) - 1);
 
     // Find the maximum username length for formatting
     int maxLen = 0;
-    for (int j = 0; j < actual; j++) {
-        int currLen = (int) strlen(clients[j].username);
+    for (int j = 0; j < actualConnected; j++) {
+        int currLen = (int) strlen(connectedClients[j]->username);
         if (currLen > maxLen) {
             maxLen = currLen;
         }
     }
 
-    for (int i = 0; i < actual; i++) {
-        strncat(message, clients[i].username, BUF_SIZE - strlen(message) - 1);
+    for (int i = 0; i < actualConnected; i++) {
+        strncat(message, connectedClients[i]->username, BUF_SIZE - strlen(message) - 1);
 
-        int pad = maxLen - (int)strlen(clients[i].username) + 1;
+        int pad = maxLen - (int)strlen(connectedClients[i]->username) + 1;
         if (pad < 1) {
             pad = 1;
         }
@@ -323,7 +414,7 @@ void listClients(Client *clients, int actual, Client requester) {
         spaces[pad] = '\0';
         strncat(message, spaces, BUF_SIZE - strlen(message) - 1);
 
-        if (clients[i].gameId != NULL) {
+        if (connectedClients[i]->gameId != NULL) {
             strncat(message, "in game", BUF_SIZE - strlen(message) - 1);
         }
 
@@ -456,8 +547,8 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message) {
     return 1;
 }
 
-void sendMP(Client *clients, Client *sender, int actual, char *username, char *message) {
-    Client *client = findClientByUsername(clients, actual, username);
+void sendMP(Client **connectedClients, Client *sender, int actualConnected, char *username, char *message) {
+    Client *client = findClientByUsername(connectedClients, actualConnected, username);
 
     // Format message to add sender's name
     char formattedMessage[2*BUF_SIZE];
@@ -474,12 +565,12 @@ void updateBio(Client *client, char bio[]) {
     writeClient(client->sock, msg);
 }
 
-int showBio(Client *clients, int actual, Client *requester, char username[]) {
+int showBio(Client **connectedClients, int actualConnected, Client *requester, char username[]) {
     Client *client;
     if (username == NULL || strlen(username) == 0) {
         client = requester;
     } else {
-        client = findClientByUsername(clients, actual, username);
+        client = findClientByUsername(connectedClients, actualConnected, username);
         if (client == NULL) {
             char msg[] = "Error: User not found.\n";
             writeClient(requester->sock, msg);

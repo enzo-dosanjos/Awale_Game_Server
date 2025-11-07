@@ -25,15 +25,12 @@ void endClient(void)
 #endif
 }
 
-void appClient(const char *address, const char *name)
+void appClient(const char *address)
 {
    SOCKET sock = initConnectionClient(address);
    char buffer[BUF_SIZE];
 
    fd_set rdfs;
-
-   /* send our name */
-   writeServer(sock, name);
 
    while(1)
    {
@@ -151,13 +148,13 @@ int main(int argc, char **argv)
 {
    if(argc < 2)
    {
-      printf("Usage : %s [address] [pseudo]\n", argv[0]);
+      printf("Usage : %s [address]\n", argv[0]);
       return EXIT_FAILURE;
    }
 
    initClient();
 
-   appClient(argv[1], argv[2]);
+   appClient(argv[1]);
 
    endClient();
 
