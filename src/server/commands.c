@@ -279,12 +279,14 @@ int removeSentReq(Client **connectedClients, Client *client, int actualConnected
     return 1;
 }
 
-int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
+int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames, int house) {
     if (!client->gameId) {
+        char msg[] = "Error: You are not currently in a game.\n";
+        writeClient(client->sock, msg);
         return 0;
     }
 
-    GameSession *gameSession = findGameSessionByClient(client, gameSessions, actualGame);
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     if (gameSession == NULL) {
         return 0;
     }
@@ -327,30 +329,30 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
     }
 
     if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES)) {
-        handleEndgame(gameSession);
+        handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
     }
 
     return 1;
 }
 
-int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame) {
+int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames) {
     if (!client->gameId) {
         return 0;
     }
 
-    GameSession *gameSession = findGameSessionByClient(client, gameSessions, actualGame);
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     if (gameSession == NULL) {
         return 0;
     }
 
     if (gameSession->players[0] == client) {
         if (gameSession->endGameSuggested == 1) {
-            handleEndgame(gameSession);
+            handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
         }
         gameSession->endGameSuggested = 0;
     } else if (gameSession->players[1] == client) {
         if (gameSession->endGameSuggested == 0) {
-            handleEndgame(gameSession);
+            handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
         }
         gameSession->endGameSuggested = 1;
     }
@@ -361,25 +363,25 @@ int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame) {
     return 1;
 }
 
-int acceptEndgame(Client *client, GameSession *gameSessions, int actualGame) {
+int acceptEndgame(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames) {
         if (!client->gameId) {
         return 0;
     }
 
-    GameSession *gameSession = findGameSessionByClient(client, gameSessions, actualGame);
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     if (gameSession == NULL) {
         return 0;
     }
 
     if (gameSession->players[!gameSession->endGameSuggested] == client) {
-        handleEndgame(findGameSessionByClient(client, gameSession, actualGame));
+        handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
         return 1;
     }
 
     return 0;
 }
 
-void handleEndgame(GameSession *gameSession) {
+void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames) {
     int winner = endGame(&gameSession->game);
 
     char message[BUF_SIZE] = "\0";
@@ -397,6 +399,8 @@ void handleEndgame(GameSession *gameSession) {
         gameSession->players[i]->gameId = NULL;
     }
 
+    removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
+    removeGameSession(gameSessions, numGames, gameSession->id);
     freeGame(&gameSession->game);
 }
 

@@ -198,15 +198,15 @@ void appServer(void)
                      }
 
                      int house = atoi(houseChar);
-                     move(client, gameSessions, actualGame, house);
+                     move(client, activeGameSessions, &numActiveGames, gameSessions, &numGames, house);
                   }
                   else if (strcmp(command, "ENDGAME") == 0)
                   {
-                     suggestEndgame(client, gameSessions, actualGame);
+                     suggestEndgame(client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
                   }
                   else if (strcmp(command, "ACCEPTEND") == 0)
                   {
-                     acceptEndgame(client, gameSessions, actualGame);
+                     acceptEndgame(client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
                   }
                   else if (strcmp(command, "MSG") == 0)
                   {
@@ -228,7 +228,11 @@ void appServer(void)
                         // It's a public message
                         // Reconstruct message
                         char message[BUF_SIZE];
-                        snprintf(message, BUF_SIZE, "%s %s", msgOrUsername, restOfMsg);
+                        if (restOfMsg == NULL) {
+                           snprintf(message, BUF_SIZE, "%s\n", msgOrUsername);
+                        } else {
+                           snprintf(message, BUF_SIZE, "%s %s\n", msgOrUsername, restOfMsg);
+                        }
                         sendMessageToAllClients(connectedClients, client->username, actualConnected, message, 0);
                      }
                   }

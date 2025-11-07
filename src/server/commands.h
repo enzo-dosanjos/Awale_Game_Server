@@ -15,13 +15,13 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
 
 int declineChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[]);
 
-int move(Client *client, GameSession *gameSessions, int actualGame, int house);
+int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames, int house);
 
-int suggestEndgame(Client *client, GameSession *gameSessions, int actualGame);
+int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames);
 
-int acceptEndgame(Client *client, GameSession *gameSessions, int actualGame);
+int acceptEndgame(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames);
 
-void handleEndgame(GameSession *gameSession);
+void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames);
 
 void listClients(Client **connectedClients, int actualConnected, Client requester);
 
