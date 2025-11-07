@@ -2,8 +2,10 @@
 #define AWALE_GAME_SERVER_IHM_H
 
 #include "gameUtils.h"
+#include "../constants.h"
 
-#define BUF_SIZE    1024
+
+static int maxCellWidth(const Game *game, int gridY, int gridX);
 
 void printGridMessage(char message[], Game *game, int gridX, int gridY, char usernames[][BUF_SIZE]);
 
