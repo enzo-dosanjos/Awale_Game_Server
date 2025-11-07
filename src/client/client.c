@@ -73,7 +73,7 @@ void appClient(const char *address)
          /* server down */
          if(n == 0)
          {
-            printf("Server disconnected !\n");
+            printf("You've been disconnected !\n");
             break;
          }
          puts(buffer);
