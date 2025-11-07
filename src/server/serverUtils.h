@@ -71,7 +71,7 @@ int readClient(SOCKET sock, char *buffer);
 void writeClient(SOCKET sock, const char *buffer);
 void sendMessageToAllClients(Client **connectedClients, char sender[], int actualConnected, const char *buffer, char from_server);
 Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[]);
-GameSession *findGameSessionByClient(Client *client, GameSession *gameSessions, int actualGame);
+GameSession *findGameSessionByClient(Client *client, GameSession **gameSessions, int actualGame);
 void sendMessageToClient(Client **connectedClients, Client *sender, int actualConnected, char username[], const char *buffer);
 void sendMessageToLobby(SOCKET *lobby, int actualLobby, const char *buffer);
 void removeClient(Client **connectedClients, int to_remove, int *actualConnected);
@@ -81,7 +81,11 @@ int addChallenge(Client *challenger, Client *challenged);
 int removeChallenge(Client *client, Client *challenged);
 void clearSentChallenge(Client *client);
 void clearReceivedChallenge(Client *client);
-GameSession *findGameSessionByViewer(GameSession *gameSessions, int actualGame, Client *viewer);
+int findClientIndex(Client **connectedClients, int actualConnected, Client *client);
+GameSession *findGameSessionByViewer(GameSession **gameSessions, int actualGame, Client *viewer);
+int removeActiveGameSession(GameSession **activeGameSessions, int *numGames, int gameId);
+int removeGameSession(GameSession *gameSessions, int *numGames, int gameId);
+int removeSavedGame(GameSession *savedGames, int *numSavedGames, int gameId);
 
 
 #endif //AWALE_SERVER_UTILS_GAMESERVER_H

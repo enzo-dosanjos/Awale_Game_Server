@@ -104,15 +104,24 @@ Client *findClientByUsername(Client **connectedClients, int actualConnected, cha
    return NULL; // Not found
 }
 
-GameSession *findGameSessionByClient(Client *client, GameSession *gameSessions, int actualGame)
+int findClientIndex(Client **connectedClients, int actualConnected, Client *client) {
+   for (int i = 0; i < actualConnected; i++) {
+      if (connectedClients[i] == client) {
+         return i;
+      }
+   }
+   return -1; // Not found
+}
+
+GameSession *findGameSessionByClient(Client *client, GameSession **gameSessions, int actualGame)
 {
    int i = 0;
-   while ((i < actualGame) && (gameSessions[i].id != *(client->gameId))) i++;
+   while ((i < actualGame) && (gameSessions[i]->id != *(client->gameId))) i++;
    if (i == actualGame) {
       return NULL; // Not found
    }
 
-   return &(gameSessions[i]);
+   return gameSessions[i];
 }
 
 void sendMessageToClient(Client **connectedClients, Client *sender, int actualConnected, char username[], const char *buffer)
@@ -231,20 +240,64 @@ void clearReceivedChallenge(Client *client) {
    client->numPendingChallengesTo = 0;
 }
 
-GameSession *findGameSessionByViewer(GameSession *gameSessions, int actualGame, Client *viewer)
+GameSession *findGameSessionByViewer(GameSession **gameSessions, int actualGame, Client *viewer)
 {
    for (int i = 0; i < actualGame; i++) {
-      for (int j = 0; j < gameSessions[i].numViewers; j++) {
-         if (gameSessions[i].viewers[j] == viewer) {
-            return &gameSessions[i];
+      for (int j = 0; j < gameSessions[i]->numViewers; j++) {
+         if (gameSessions[i]->viewers[j] == viewer) {
+            return gameSessions[i];
          }
       }
 
       for (int k = 0; k < NUM_PLAYERS; k++) {
-         if (gameSessions[i].players[k] == viewer) {
-            return &gameSessions[i];
+         if (gameSessions[i]->players[k] == viewer) {
+            return gameSessions[i];
          }
       }
    }
    return NULL; // Not found
+}
+
+int removeActiveGameSession(GameSession **activeGameSessions, int *numGames, int gameId) {
+    int foundIndex = -1;
+    for (int i = 0; i < *numGames; i++) {
+        if (activeGameSessions[i]->id == gameId) {
+            foundIndex = i;
+            break;
+        }
+    }
+
+    if (foundIndex == -1) {
+        return 0; // Not found
+    }
+
+    // Shift remaining game sessions down
+    for (int i = foundIndex; i < *numGames - 1; i++) {
+        activeGameSessions[i] = activeGameSessions[i + 1];
+    }
+    (*numGames)--;
+
+    return 1;
+}
+
+int removeGameSession(GameSession *gameSessions, int *numGames, int gameId) {
+    int foundIndex = -1;
+    for (int i = 0; i < *numGames; i++) {
+        if (gameSessions[i].id == gameId) {
+            foundIndex = i;
+            break;
+        }
+    }
+
+    if (foundIndex == -1) {
+        return 0; // Not found
+    }
+
+    // Shift remaining game sessions down
+    for (int i = foundIndex; i < *numGames - 1; i++) {
+        gameSessions[i] = gameSessions[i + 1];
+    }
+    (*numGames)--;
+
+    return 1;
 }

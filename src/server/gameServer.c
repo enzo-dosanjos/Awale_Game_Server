@@ -34,12 +34,14 @@ void appServer(void)
    int actualConnected = 0;
    int actualLobby = 0;
    int max = sock;
-   int actualGame = 0;
+   int numGames = 0;
+   int numActiveGames = 0;
    /* an array for all clients */
    SOCKET lobby[MAX_CONNECTED_CLIENTS];
    Client clients[MAX_CLIENTS];
    Client *connectedClients[MAX_CONNECTED_CLIENTS];
-   GameSession gameSessions[MAX_CLIENTS / 2];
+   GameSession gameSessions[MAX_GAMES];
+   GameSession *activeGameSessions[MAX_ACTIVE_GAMES];
 
    fd_set rdfs;
 
@@ -113,12 +115,7 @@ void appServer(void)
                /* client disconnected */
                if(c == 0)
                {
-                  closesocket(connectedClients[i]->sock);
-                  connectedClients[i]->sock = -1;
-                  strncpy(buffer, client->username, BUF_SIZE - 1);
-                  strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                  removeClient(connectedClients, i, &actualConnected);
-                  sendMessageToAllClients(connectedClients, client->username, actualConnected, buffer, 1);
+                  quit(connectedClients, &actualConnected, client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
                }
                else
                {
@@ -166,7 +163,7 @@ void appServer(void)
                   }
                   else if (strcmp(command, "LISTGAMES") == 0)
                   {
-                     listGames(gameSessions, actualGame, *client);
+                     listGames(activeGameSessions, numActiveGames, *client);
                   }
                   else if (strcmp(command, "SEEPENDINGREQ") == 0)
                   {
@@ -260,22 +257,22 @@ void appServer(void)
                      }
 
                      int gameId = atoi(gameIdStr);
-                     watchGame(client, gameSessions, actualGame, gameId);
+                     watchGame(client, activeGameSessions, numActiveGames, gameId);
                   }
                   else if (strcmp(command, "MSGGAME") == 0)
                   {
                      char *message = strtok(NULL, "");
                      if (message == NULL) {
-                        char msg[] = "Error: No message provided for game chat. Use: MSGGAME <message>\n";
+                        char msg[] = "Error: No message provided for game chat. Use: MSGGAME <message>.\n";
                         writeClient(client->sock, msg);
                         continue;
                      }
-                     GameSession *actualGameSession = findGameSessionByViewer(gameSessions, actualGame, client);
+                     GameSession *actualGameSession = findGameSessionByViewer(activeGameSessions, numActiveGames, client);
                      SendMsgGame(actualGameSession, client, message);
                   }
                   else if (strcmp(command, "BIO") == 0)
                   {
-                     char *bio = strtok(NULL, " ");
+                     char *bio = strtok(NULL, "");
                      if (bio == NULL) {
                         char msg[] = "Error: No bio provided. Use: BIO <your_bio>\n";
                         writeClient(client->sock, msg);
@@ -305,6 +302,19 @@ void appServer(void)
                      } else {
                         setPrivacy(client, 0);
                      }
+                  }
+                  else if (strcmp(command, "QUIT") == 0)
+                  {
+                     quit(connectedClients, &actualConnected, client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
+                  }
+                  else if (strcmp(command, "LASTGAME") == 0)
+                  {
+                     loadGame(connectedClients, actualConnected, client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
+                  }
+                  else
+                  {
+                     char msg[] = "Error: Unknown command. Use HELP to list every known commands\n";
+                     writeClient(client->sock, msg);
                   }
                }
                break;

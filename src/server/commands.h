@@ -25,7 +25,7 @@ void handleEndgame(GameSession *gameSession);
 
 void listClients(Client **connectedClients, int actualConnected, Client requester);
 
-void listGames(GameSession *gameSessions, int actualGame, Client requester);
+void listGames(GameSession **gameSessions, int actualGame, Client requester);
 
 void seePendingReq(Client *client);
 
@@ -47,8 +47,13 @@ int addFriend(Client *client, char username[]);
 
 void setPrivacy(Client *client, int privacy);
 
-int watchGame(Client *client, GameSession *gameSessions, int actualGame, int gameId);
+int watchGame(Client *client, GameSession **gameSessions, int actualGame, int gameId);
 
 int SendMsgGame(GameSession *gameSession, Client *sender, char *message);
+
+int quit(Client **connectedClients, int *actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numSavedGames);
+
+int loadGame(Client **connectedClients, int actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames);
+
 
 #endif //AWALE_GAME_SERVER_COMMANDS_H

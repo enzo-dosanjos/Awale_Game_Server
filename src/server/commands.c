@@ -11,7 +11,7 @@ int signUp(Client *clients, int *actualClient, Client **connectedClients, int *a
         writeClient(lobby[index], msg);
         return 0;
     }
-    
+
     for (int i = 0; i < *actualClient; i++) {
         if (strcmp(clients[i].username, username) == 0) {
             char msg[] = "Error: Username is already in use.\n";
@@ -423,7 +423,7 @@ void listClients(Client **connectedClients, int actualConnected, Client requeste
     writeClient(requester.sock, message);
 }
 
-void listGames(GameSession *gameSessions, int actualGame, Client requester) {
+void listGames(GameSession **gameSessions, int actualGame, Client requester) {
     char message[BUF_SIZE];
     message[0] = '\0';
 
@@ -434,16 +434,16 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
         for (int i = 0; i < actualGame; i++) {
             char gameInfo[3*BUF_SIZE];
             snprintf(gameInfo, 3*BUF_SIZE, "Game ID: %d | Players: %s vs %s\n",
-                     gameSessions[i].id,
-                     gameSessions[i].players[0]->username,
-                     gameSessions[i].players[1]->username);
+                     gameSessions[i]->id,
+                     gameSessions[i]->players[0]->username,
+                     gameSessions[i]->players[1]->username);
             strncat(message, gameInfo, BUF_SIZE - strlen(message) - 1);
         }
     }
     writeClient(requester.sock, message);
 }
 
-int watchGame(Client *client, GameSession *gameSessions, int actualGame, int gameId) {
+int watchGame(Client *client, GameSession **gameSessions, int actualGame, int gameId) {
     if (client->gameId != NULL) {
         char msg[] = "Error: You cannot watch a game while playing in one.\n";
         writeClient(client->sock, msg);
@@ -452,8 +452,8 @@ int watchGame(Client *client, GameSession *gameSessions, int actualGame, int gam
 
     GameSession *gameSession = NULL;
     for (int i = 0; i < actualGame; i++) {
-        if (gameSessions[i].id == gameId) {
-            gameSession = &gameSessions[i];
+        if (gameSessions[i]->id == gameId) {
+            gameSession = gameSessions[i];
             break;
         }
     }
@@ -630,4 +630,123 @@ void setPrivacy(Client *client, int privacy) {
     client->private = privacy;
     char msg[] = "Privacy setting updated.\n";
     writeClient(client->sock, msg);
+}
+
+int quit(Client **connectedClients, int *actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames) {
+    // If the client is in a game, handle game termination
+    if (client->gameId != NULL) {
+        GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
+        if (gameSession == NULL) {
+            char msg[] = "Error: You're not currently in a game.\n";
+            writeClient(client->sock, msg);
+            return 0;
+        }
+
+        client->gameId = NULL;
+
+        // Notify the opponent
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            if (gameSession->players[i] != client) {
+                char msg[BUF_SIZE];
+                snprintf(msg, BUF_SIZE, "The opponent %s has disconnected. The game has been saved.\n", client->username);
+                writeClient(gameSession->players[i]->sock, msg);
+                gameSession->players[i]->gameId = NULL;
+            }
+        }
+
+        removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
+    }
+
+
+    closesocket(client->sock);
+    client->sock = -1;
+
+    char buffer[BUF_SIZE];
+    strncpy(buffer, client->username, BUF_SIZE - 1);
+    strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
+
+    int i = findClientIndex(connectedClients, *actualConnected, client);
+    removeClient(connectedClients, i, actualConnected);
+
+    sendMessageToAllClients(connectedClients, client->username, *actualConnected, buffer, 1);
+
+    return 1;
+}
+
+int loadGame(Client **connectedClients, int actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames) {
+    if (*numGames == 0) {
+        char msg[] = "Error: No saved games to load. Next time, quit by using the QUIT command.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    int clientLastSavedGameIndex = -1;
+    for (int i = 0; i < *numGames; i++) {
+        // Check if the client is a player in the saved game
+        for (int j = 0; j < NUM_PLAYERS; j++) {
+            if (gameSessions[i].players[j] == client) {
+                clientLastSavedGameIndex = i;
+                break;
+            }
+        }
+    }
+
+    if (clientLastSavedGameIndex == -1) {
+        char msg[] = "Error: You are not a player in any saved game. Next time, quit by using the QUIT command.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    // Check if both players are connected
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        Client *player = gameSessions[clientLastSavedGameIndex].players[i];
+
+        if (player == client) {
+            continue;
+        }
+
+        for (int j = 0; j < actualConnected; j++) {
+            if (connectedClients[j] == player) {
+                break;
+            }
+            if (j == actualConnected - 1) {
+                char msg[] = "Error: Both players must be connected to load the saved game.\n";
+                writeClient(client->sock, msg);
+                return 0;
+            }
+        }
+    }
+
+    GameSession *gameSession = &gameSessions[clientLastSavedGameIndex];
+
+    activeGameSessions[*numActiveGames] = gameSession;
+    (*numActiveGames)++;
+
+    char msg[] = "Last saved game loaded successfully.\n";
+    writeClient(client->sock, msg);
+
+    Client *challengerClient = NULL;
+    char usernames[NUM_PLAYERS][BUF_SIZE];
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        strcpy(usernames[i], gameSession->players[i]->username);
+
+        if (gameSession->players[i] != client) {
+            challengerClient = gameSession->players[i];
+        }
+    }
+
+    // Set gameId for both players
+    challengerClient->gameId = &gameSession->id;
+    client->gameId = &gameSession->id;
+
+    char msgGrid[BUF_SIZE] = "\0";
+    printGridMessage(msgGrid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
+    writeClient(client->sock, msgGrid);
+    writeClient(challengerClient->sock, msgGrid);
+    for (int i = 0; i < gameSession->numViewers; i++) {
+        writeClient(gameSession->viewers[i]->sock, msgGrid);
+    }
+    writeClient(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
+
+    return 1;
 }
