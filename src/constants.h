@@ -1,0 +1,17 @@
+#ifndef AWALE_GAME_SERVER_CONSTANTS_H
+#define AWALE_GAME_SERVER_CONSTANTS_H
+
+#define NUM_HOUSES 6
+#define NUM_SEEDS 48
+#define NUM_PLAYERS 2
+
+#define CRLF        "\r\n"
+#define PORT         1977
+#define MAX_CLIENTS     100
+
+#define BUF_SIZE    1024
+
+#define MAX_PENDING_CHALLENGES 10
+#define MAX_FRIENDS 10
+
+#endif //AWALE_GAME_SERVER_CONSTANTS_H

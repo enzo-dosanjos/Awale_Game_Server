@@ -2,23 +2,33 @@
 CXX := gcc
 CXXFLAGS = -ansi -pedantic -Wall -std=c18
 CXXFLAGS_DEBUG := -ansi -pedantic -Wall -std=c18 -g -DMAP
-TARGET := Awale
+ServTARGET := Awale
+ClientTARGET := Client
+TARGET := $(ServTARGET) $(ClientTARGET)
 BUILD_DIR := build
 
-SOURCES = gameLogic.c gameUtils.c ihm.c #gameServer.c client.c server.c
-OBJECTS = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
+SERVSOURCES = src/game/gameLogic.c src/game/gameUtils.c src/game/ihm.c \
+			  src/server/gameServer.c src/server/mainServer.c src/server/commands.c src/server/serverUtils.c
+CLIENTSOURCES = src/client/client.c
+SERVOBJECTS = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SERVSOURCES))
+CLIENTOBJECTS = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CLIENTSOURCES))
 
-all: $(TARGET)
+all: clean $(TARGET)
+server: $(ServTARGET)
+client: $(ClientTARGET)
 
 debug: CXXFLAGS := $(CXXFLAGS_DEBUG)
 debug: clean $(TARGET)
 
 # Création de l'exécutable
-$(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJECTS)
+$(ServTARGET): $(SERVOBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(ServTARGET) $(SERVOBJECTS)
+
+$(ClientTARGET): $(CLIENTOBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(ClientTARGET) $(CLIENTOBJECTS)
 
 # Compilation de chaque fichier source en objet
-$(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
