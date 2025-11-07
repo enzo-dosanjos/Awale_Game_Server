@@ -23,9 +23,9 @@ int challenge(Client *clients, Client *challenger, int actual, char username[]) 
         return 0;
     }
 
-    char message[BUF_SIZE];
-    snprintf(message, BUF_SIZE, "CHALLENGE_FROM %s", challenger->username);
-    sendMessageToClient(clients, NULL, actual, username, message);
+    char message[2*BUF_SIZE];
+    snprintf(message, 2*BUF_SIZE, "CHALLENGE_FROM %s", challenger->username);
+    writeClient(challenged->sock, message);
 
     return 1;
 }
@@ -56,12 +56,12 @@ int acceptChallenge(Client *clients, Client *client, int actual, char challenger
         return 0;
     }
 
-    char message[BUF_SIZE];
-    snprintf(message, BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
-    sendMessageToClient(clients, NULL, actual, challenger, message);
+    char message[2*BUF_SIZE];
+    snprintf(message, 2*BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
+    writeClient(challengerClient->sock, message);
 
-    strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): \n");
-    sendMessageToClient(clients, NULL, actual, client->username, message);
+    strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
+    writeClient(client->sock, message);
 
     char rotationStr[2];
     readClient(client->sock, rotationStr);
@@ -108,9 +108,9 @@ int declineChallenge(Client *clients, Client *client, int actual, char challenge
     // Remove the pending challenge
     removeChallenge(challengerClient, client);
 
-    char message[BUF_SIZE];
-    snprintf(message, BUF_SIZE, "CHALLENGE_DECLINED_BY %s", client->username);
-    sendMessageToClient(clients, NULL, actual, challenger, message);
+    char message[2*BUF_SIZE];
+    snprintf(message, 2*BUF_SIZE, "CHALLENGE_DECLINED_BY %s", client->username);
+    writeClient(challengerClient->sock, message);
 
     return 1;
 }
@@ -204,8 +204,8 @@ int move(Client *client, GameSession *gameSessions, int actualGame, int house) {
         return 0;
     }
 
-    char movePlayed[BUF_SIZE] = "\0";
-    sprintf(movePlayed, "%s played %d!\n", client->username, move.houseNum);
+    char movePlayed[2*BUF_SIZE] = "\0";
+    snprintf(movePlayed, 2*BUF_SIZE, "%s played %d!\n", client->username, move.houseNum);
     writeClient(opponent->sock, movePlayed);
 
     gameSession->currentPlayer = next;
@@ -341,8 +341,8 @@ void listGames(GameSession *gameSessions, int actualGame, Client requester) {
     } else {
         strncat(message, "Ongoing games:\n", BUF_SIZE - strlen(message) - 1);
         for (int i = 0; i < actualGame; i++) {
-            char gameInfo[BUF_SIZE];
-            snprintf(gameInfo, BUF_SIZE, "Game ID: %d | Players: %s vs %s\n",
+            char gameInfo[3*BUF_SIZE];
+            snprintf(gameInfo, 3*BUF_SIZE, "Game ID: %d | Players: %s vs %s\n",
                      gameSessions[i].id,
                      gameSessions[i].players[0]->username,
                      gameSessions[i].players[1]->username);
@@ -438,8 +438,8 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message) {
     }
 
     // Format message to add sender's name
-    char formattedMessage[BUF_SIZE];
-    snprintf(formattedMessage, BUF_SIZE, "%s (game chat): %s\n", sender->username, message);
+    char formattedMessage[2*BUF_SIZE];
+    snprintf(formattedMessage, 2*BUF_SIZE, "%s (game chat): %s\n", sender->username, message);
 
     // Send to viewers
     for (int i = 0; i < gameSession->numViewers; i++) {
@@ -460,8 +460,8 @@ void sendMP(Client *clients, Client *sender, int actual, char *username, char *m
     Client *client = findClientByUsername(clients, actual, username);
 
     // Format message to add sender's name
-    char formattedMessage[BUF_SIZE];
-    snprintf(formattedMessage, BUF_SIZE, "%s (private): %s\n", sender->username, message);
+    char formattedMessage[2*BUF_SIZE];
+    snprintf(formattedMessage, 2*BUF_SIZE, "%s (private): %s\n", sender->username, message);
 
     if (client != NULL) {
         writeClient(client->sock, formattedMessage);
@@ -504,8 +504,8 @@ int showBio(Client *clients, int actual, Client *requester, char username[]) {
         }
     }
 
-    char message[BUF_SIZE];
-    snprintf(message, BUF_SIZE, "Bio of %s:\n%s", client->username, client->bio);
+    char message[3*BUF_SIZE];
+    snprintf(message, 3*BUF_SIZE, "Bio of %s:\n%s", client->username, client->bio);
     writeClient(requester->sock, message);
     return 1;
 }
