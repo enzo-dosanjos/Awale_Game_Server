@@ -357,7 +357,7 @@ int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numAct
         gameSession->endGameSuggested = 1;
     }
     
-    Client *opponent = gameSession->players[nextPlayer(gameSession->currentPlayer)];
+    Client *opponent = gameSession->players[nextPlayer(gameSession->endGameSuggested)];
     writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?\n");
 
     return 1;
