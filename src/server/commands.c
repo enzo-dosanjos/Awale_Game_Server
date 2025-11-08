@@ -767,3 +767,65 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client, Gam
 
     return 1;
 }
+
+void sendHelp(SOCKET sock, int loggedIn) {
+    char out[8 * BUF_SIZE];
+    out[0] = '\0';
+
+    strcat(out, "Available commands:"); strcat(out, "\n");
+
+    if (!loggedIn) {
+        strcat(out, "\n");
+        strcat(out, "Lobby:\n");
+        strcat(out, "  HELP                                   - Show this help.\n");
+        strcat(out, "  MSG <message>                          - Send a message to the lobby.\n");
+        strcat(out, "  LOGIN <username> <password>            - Log into an existing account.\n");
+        strcat(out, "  SIGNUP <username> <password>           - Create a new account and connect.\n");
+    } else {
+        strcat(out, "\n");
+        strcat(out, "General:\n");
+        strcat(out, "  HELP                                   - Show this help.\n");
+        strcat(out, "  LIST                                   - List connected users and if they are currently playing.\n");
+        strcat(out, "  LISTGAMES                              - List ongoing games.\n");
+        strcat(out, "  QUIT                                   - Disconnect.\n");
+
+        strcat(out, "\n");
+        strcat(out, "Challenges:\n");
+        strcat(out, "  CHALLENGE <username>                   - Send a game challenge.\n");
+        strcat(out, "  ACCEPT <username>                      - Accept a pending challenge.\n");
+        strcat(out, "  DECLINE <username>                     - Decline a pending challenge.\n");
+        strcat(out, "  SEEPENDINGREQ                          - List received challenges.\n");
+        strcat(out, "  SEESENTREQ                             - List sent challenges.\n");
+        strcat(out, "  CLEARPENDINGREQ                        - Clear received challenges.\n");
+        strcat(out, "  CLEARSENTREQ                           - Clear sent challenges.\n");
+        strcat(out, "  REMOVESENTREQ <username>               - Unsend a challenge.\n");
+
+        strcat(out, "\n");
+        strcat(out, "Messaging:\n");
+        strcat(out, "  MSG <message>                          - Send a message to the general chat.\n");
+        strcat(out, "  MSG @<username> <message>              - Send a private message.\n");
+
+        strcat(out, "\n");
+        strcat(out, "Game:\n");
+        strcat(out, "  MSGGAME <message>                      - Send a message to the current game chat.\n");
+        strcat(out, "  MOVE <house>                           - Play a move when it's your turn.\n");
+        strcat(out, "  ENDGAME                                - Propose to end the current game.\n");
+        strcat(out, "  ACCEPTEND                              - Accept the endgame proposal.\n");
+        strcat(out, "  LASTGAME                               - Load your last unfinished game.\n");
+
+        strcat(out, "\n");
+        strcat(out, "Spectating:\n");
+        strcat(out, "  LISTGAMES                              - List ongoing games ids.\n");
+        strcat(out, "  WATCH <gameId>                         - Watch a game (respects privacy).\n");
+        strcat(out, "  MSGGAME <message>                      - Send a message to the watched game chat.\n");
+
+        strcat(out, "\n");
+        strcat(out, "Profile:\n");
+        strcat(out, "  BIO <text>                             - Update your bio.\n");
+        strcat(out, "  SHOWBIO [username]                     - Show your or someone's bio (respects privacy).\n");
+        strcat(out, "  ADDFRIEND <username>                   - Add a friend.\n");
+        strcat(out, "  SETPRIVACY <true|false>                - true makes your bio/game private to friends.\n");
+    }
+
+    writeClient(sock, out);
+}

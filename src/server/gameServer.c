@@ -311,6 +311,10 @@ void appServer(void)
                   {
                      loadGame(connectedClients, actualConnected, client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
                   }
+                  else if (strcmp(command, "HELP") == 0)
+                  {
+                     sendHelp(client->sock, 1);
+                  }
                   else
                   {
                      char msg[] = "Error: Unknown command. Use HELP to list every known commands\n";
@@ -363,7 +367,17 @@ void appServer(void)
 
                      signUp(clients, &actualClient, connectedClients, &actualConnected, lobby, &actualLobby, i, username, password);
                   }
+                  else if (strcmp(command, "HELP") == 0)
+                  {
+                     sendHelp(lobby[i], 0);
+                  }
+                  else
+                  {
+                     char msg[] = "Error: Unknown command. Use HELP to list every known commands\n";
+                     writeClient(lobby[i], msg);
+                  }
                }
+               break;
             }
          }
       }

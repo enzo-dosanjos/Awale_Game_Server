@@ -55,5 +55,7 @@ int quit(Client **connectedClients, int *actualConnected, Client *client, GameSe
 
 int loadGame(Client **connectedClients, int actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames);
 
+void sendHelp(SOCKET sock, int loggedIn);
+
 
 #endif //AWALE_GAME_SERVER_COMMANDS_H
