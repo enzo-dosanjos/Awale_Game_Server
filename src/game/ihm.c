@@ -3,7 +3,7 @@
 #include <string.h>
 
 
-static int maxCellWidth(const Game *game, int gridY, int gridX) {
+int maxCellWidth(const Game *game, int gridY, int gridX) {
     int max = 0;
     for (int i = 0; i < gridY; ++i)
         for (int j = 0; j < gridX; ++j)
