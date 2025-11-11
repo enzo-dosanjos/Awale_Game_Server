@@ -1,20 +1,19 @@
 #ifndef AWALE_GAME_SERVER_GAMESERVER_H
 #define AWALE_GAME_SERVER_GAMESERVER_H
 
-
 #ifdef WIN32
 
 #include <winsock2.h>
 
 #else
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h> /* gethostbyname */
 #include <netinet/in.h>
 #include <sys/select.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h> /* close */
-#include <netdb.h> /* gethostbyname */
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define closesocket(s) close(s)
@@ -31,10 +30,8 @@ typedef struct in_addr IN_ADDR;
 
 #include <errno.h>
 
-
 void initServer(void);
 void endServer(void);
 void appServer(void);
 
-
-#endif //AWALE_GAME_SERVER_GAMESERVER_H
+#endif // AWALE_GAME_SERVER_GAMESERVER_H

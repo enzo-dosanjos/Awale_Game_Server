@@ -4,11 +4,11 @@
 
 int main(int argc, char **argv)
 {
-   initServer();
+    initServer();
 
-   appServer();
+    appServer();
 
-   endServer();
+    endServer();
 
-   return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

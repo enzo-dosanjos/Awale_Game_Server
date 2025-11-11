@@ -7,13 +7,13 @@
 
 #else
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h> /* gethostbyname */
 #include <netinet/in.h>
 #include <sys/select.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h> /* close */
-#include <netdb.h> /* gethostbyname */
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define closesocket(s) close(s)
@@ -24,8 +24,8 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
-#define CRLF     "\r\n"
-#define PORT     1977
+#define CRLF "\r\n"
+#define PORT 1977
 
 #define BUF_SIZE 1024
 
@@ -37,4 +37,4 @@ void endConnection(int sock);
 int readServer(SOCKET sock, char *buffer);
 void writeServer(SOCKET sock, const char *buffer);
 
-#endif //AWALE_GAME_SERVER_CLIENT_H
+#endif // AWALE_GAME_SERVER_CLIENT_H

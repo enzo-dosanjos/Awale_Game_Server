@@ -46,7 +46,8 @@ void copyGame(Game *game, Game *copy, int nbPlayers, int nbHouses)
     copy->grid = grid;
     copy->rotation = game->rotation;
     copy->scores = malloc(nbPlayers * sizeof(int));
-    for (int i = 0; i < nbPlayers; i++) {
+    for (int i = 0; i < nbPlayers; i++)
+    {
         copy->scores[i] = game->scores[i];
     }
 }
@@ -79,12 +80,14 @@ int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
         return 0;
     }
 
-    int famishedCurr = checkFamishedPlayer(game, (move.numPlayer + 1) % nbPlayers, nbHouses);
-    
+    int famishedCurr = checkFamishedPlayer(
+            game, (move.numPlayer + 1) % nbPlayers, nbHouses);
+
     Game tempGame;
     copyGame(game, &tempGame, nbPlayers, nbHouses);
     makeAMove(&tempGame, move, 1, nbPlayers, nbHouses);
-    int famishedNext = checkFamishedPlayer(&tempGame, (move.numPlayer + 1) % nbPlayers, nbHouses);
+    int famishedNext = checkFamishedPlayer(
+            &tempGame, (move.numPlayer + 1) % nbPlayers, nbHouses);
 
     // Check if the move feeds a famished opponent
     if (famishedCurr && famishedNext)
@@ -101,7 +104,8 @@ int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
     return 1;
 }
 
-void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers, int nbHouses)
+void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers,
+               int nbHouses)
 {
     int *gameGrid = &game->grid[0][0];
 
@@ -114,14 +118,15 @@ void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers, int nbHouse
     {
         gameGrid[i % (nbHouses * nbPlayers)]++;
     }
-    
+
     gameGrid[houseInd] = 0;
 
     if (capturesOk)
     {
         i = (i - 1) % (nbHouses * nbPlayers);
 
-        while ((i / nbHouses != move.numPlayer) && (gameGrid[i] == 2 || gameGrid[i] == 3))
+        while ((i / nbHouses != move.numPlayer) &&
+               (gameGrid[i] == 2 || gameGrid[i] == 3))
         {
             game->scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
@@ -135,7 +140,7 @@ int isGameOver(Game *game, int nbPlayers, int nbHouses)
     for (int i = 0; i < nbPlayers; i++)
     {
         int noLegalMoves = 1;
-        
+
         if (game->scores[i] >= 25)
         {
             return 1;
