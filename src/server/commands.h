@@ -7,7 +7,7 @@
 
 int signUp(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password);
 
-int login(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password);
+int login(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames, SOCKET *lobby, int *actualLobby, int index, char *username, char *password);
 
 int challenge(Client **connectedClients, Client *challenger, int actualConnected, char username[]);
 

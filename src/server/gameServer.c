@@ -353,7 +353,7 @@ void appServer(void)
                         continue;
                      }
 
-                     login(clients, &actualClient, connectedClients, &actualConnected, lobby, &actualLobby, i, username, password);
+                     login(clients, &actualClient, connectedClients, &actualConnected, activeGameSessions, &numActiveGames, gameSessions, &numGames, lobby, &actualLobby, i, username, password);
                   }
                   else if (strcmp(command, "SIGNUP") == 0)
                   {
