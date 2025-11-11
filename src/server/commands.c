@@ -5,9 +5,7 @@
 #include <string.h>
 #include <time.h>
 
-int signUp(Client *clients, int *actualClient, Client **connectedClients,
-           int *actualConnected, SOCKET *lobby, int *actualLobby, int index,
-           char *username, char *password)
+int signUp(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password)
 {
     if (*actualClient >= MAX_CLIENTS - 1)
     {
@@ -33,8 +31,7 @@ int signUp(Client *clients, int *actualClient, Client **connectedClients,
     (*actualConnected)++;
 
     char msg[BUF_SIZE] = "\0";
-    sprintf(msg, "Welcome, %s! You can now challenge your first opponent!\n",
-            username);
+    sprintf(msg, "Welcome, %s! You can now challenge your first opponent!\n", username);
     writeClient(lobby[index], msg);
 
     removeFromLobby(lobby, index, actualLobby);
@@ -42,11 +39,7 @@ int signUp(Client *clients, int *actualClient, Client **connectedClients,
     return 1;
 }
 
-int login(Client *clients, int *actualClient, Client **connectedClients,
-          int *actualConnected, GameSession **activeGameSessions,
-          int *numActiveGames, GameSession *gameSessions, int *numGames,
-          SOCKET *lobby, int *actualLobby, int index, char *username,
-          char *password)
+int login(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames, SOCKET *lobby, int *actualLobby, int index, char *username, char *password)
 {
     if (*actualConnected >= MAX_CONNECTED_CLIENTS - 1)
     {
@@ -88,12 +81,9 @@ int login(Client *clients, int *actualClient, Client **connectedClients,
 
     if (clients[i].sock >= 0)
     {
-        char msg[] =
-                "You've been disconnected because of a connection on another "
-                "device.\n";
+        char msg[] = "You've been disconnected because of a connection on another device.\n";
         writeClient(clients[i].sock, msg);
-        quit(connectedClients, actualConnected, &clients[i], activeGameSessions,
-             numActiveGames, gameSessions, numGames);
+        quit(connectedClients, actualConnected, &clients[i], activeGameSessions, numActiveGames, gameSessions, numGames);
     }
 
     clients[i].sock = lobby[index];
@@ -110,8 +100,7 @@ int login(Client *clients, int *actualClient, Client **connectedClients,
     return 1;
 }
 
-int challenge(Client **connectedClients, Client *challenger,
-              int actualConnected, char username[])
+int challenge(Client **connectedClients, Client *challenger, int actualConnected, char username[])
 {
     if (strcmp(challenger->username, username) == 0)
     {
@@ -120,8 +109,7 @@ int challenge(Client **connectedClients, Client *challenger,
         return 0;
     }
 
-    Client *challenged =
-            findClientByUsername(connectedClients, actualConnected, username);
+    Client *challenged = findClientByUsername(connectedClients, actualConnected, username);
     if (challenged == NULL)
     {
         char msg[] = "Error: User not found.\n";
@@ -141,13 +129,9 @@ int challenge(Client **connectedClients, Client *challenger,
     return 1;
 }
 
-int acceptChallenge(Client **connectedClients, Client *client,
-                    int actualConnected, char challenger[],
-                    GameSession *gameSessions, int *numGames,
-                    GameSession **activeGameSessions, int *numActiveGames)
+int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSessions, int *numGames, GameSession **activeGameSessions, int *numActiveGames)
 {
-    Client *challengerClient =
-            findClientByUsername(connectedClients, actualConnected, challenger);
+    Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL)
     {
         // challenger not found
@@ -184,12 +168,10 @@ int acceptChallenge(Client **connectedClients, Client *client,
     }
 
     char message[2 * BUF_SIZE];
-    snprintf(message, 2 * BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s",
-             client->username);
+    snprintf(message, 2 * BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
     writeClient(challengerClient->sock, message);
 
-    strcpy(message,
-           "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
+    strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
     writeClient(client->sock, message);
 
     char rotationStr[2];
@@ -205,7 +187,7 @@ int acceptChallenge(Client **connectedClients, Client *client,
 
     gameSession.players[0] = challengerClient;
     gameSession.players[1] = client;
-    gameSession.id = (int) time(NULL); // timestamp
+    gameSession.id = (int)time(NULL); // timestamp
     gameSession.endGameSuggested = -1;
     gameSession.numViewers = 0;
 
@@ -223,25 +205,21 @@ int acceptChallenge(Client **connectedClients, Client *client,
     {
         strcpy(usernames[i], gameSession.players[i]->username);
     }
-    printGridMessage(message, &gameSession.game, NUM_HOUSES, NUM_PLAYERS,
-                     usernames);
+    printGridMessage(message, &gameSession.game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, message);
     writeClient(challengerClient->sock, message);
     for (int i = 0; i < gameSession.numViewers; i++)
     {
         writeClient(gameSession.viewers[i]->sock, message);
     }
-    writeClient(gameSession.players[gameSession.currentPlayer]->sock,
-                "It's your turn to shine!\n");
+    writeClient(gameSession.players[gameSession.currentPlayer]->sock, "It's your turn to shine!\n");
 
     return 1;
 }
 
-int declineChallenge(Client **connectedClients, Client *client,
-                     int actualConnected, char challenger[])
+int declineChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[])
 {
-    Client *challengerClient =
-            findClientByUsername(connectedClients, actualConnected, challenger);
+    Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL)
     {
         // challenger not found
@@ -254,8 +232,7 @@ int declineChallenge(Client **connectedClients, Client *client,
     removeChallenge(challengerClient, client);
 
     char message[2 * BUF_SIZE];
-    snprintf(message, 2 * BUF_SIZE, "CHALLENGE_DECLINED_BY %s",
-             client->username);
+    snprintf(message, 2 * BUF_SIZE, "CHALLENGE_DECLINED_BY %s", client->username);
     writeClient(challengerClient->sock, message);
 
     return 1;
@@ -268,17 +245,14 @@ void seePendingReq(Client *client)
 
     if (client->numPendingChallengesFrom == 0)
     {
-        strncat(message, "No pending challenges.\n",
-                BUF_SIZE - strlen(message) - 1);
+        strncat(message, "No pending challenges.\n", BUF_SIZE - strlen(message) - 1);
     }
     else
     {
-        strncat(message, "Pending challenges from:\n",
-                BUF_SIZE - strlen(message) - 1);
+        strncat(message, "Pending challenges from:\n", BUF_SIZE - strlen(message) - 1);
         for (int i = 0; i < client->numPendingChallengesFrom; i++)
         {
-            strncat(message, client->pendingChallengesFrom[i],
-                    BUF_SIZE - strlen(message) - 1);
+            strncat(message, client->pendingChallengesFrom[i], BUF_SIZE - strlen(message) - 1);
             strncat(message, "\n", BUF_SIZE - strlen(message) - 1);
         }
     }
@@ -292,17 +266,14 @@ void seeSentReq(Client *client)
 
     if (client->numPendingChallengesTo == 0)
     {
-        strncat(message, "No sent challenges.\n",
-                BUF_SIZE - strlen(message) - 1);
+        strncat(message, "No sent challenges.\n", BUF_SIZE - strlen(message) - 1);
     }
     else
     {
-        strncat(message, "Sent challenges to:\n",
-                BUF_SIZE - strlen(message) - 1);
+        strncat(message, "Sent challenges to:\n", BUF_SIZE - strlen(message) - 1);
         for (int i = 0; i < client->numPendingChallengesTo; i++)
         {
-            strncat(message, client->pendingChallengesTo[i],
-                    BUF_SIZE - strlen(message) - 1);
+            strncat(message, client->pendingChallengesTo[i], BUF_SIZE - strlen(message) - 1);
             strncat(message, "\n", BUF_SIZE - strlen(message) - 1);
         }
     }
@@ -323,11 +294,9 @@ void clearSentReq(Client *client)
     writeClient(client->sock, msg);
 }
 
-int removeSentReq(Client **connectedClients, Client *client,
-                  int actualConnected, char username[])
+int removeSentReq(Client **connectedClients, Client *client, int actualConnected, char username[])
 {
-    Client *challengedClient =
-            findClientByUsername(connectedClients, actualConnected, username);
+    Client *challengedClient = findClientByUsername(connectedClients, actualConnected, username);
     if (challengedClient == NULL)
     {
         char msg[] = "Error: User not found.\n";
@@ -344,8 +313,7 @@ int removeSentReq(Client **connectedClients, Client *client,
     return 1;
 }
 
-int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
-         GameSession *gameSessions, int *numGames, int house)
+int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames, int house)
 {
     if (!client->gameId)
     {
@@ -354,8 +322,7 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
         return 0;
     }
 
-    GameSession *gameSession = findGameSessionByClient(
-            client, activeGameSessions, *numActiveGames);
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     if (gameSession == NULL)
     {
         return 0;
@@ -366,9 +333,7 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
 
     if (client != gameSession->players[gameSession->currentPlayer])
     {
-        char msg[] =
-                "Error: It's not your turn, please wait for the opponent to "
-                "make their move.\n";
+        char msg[] = "Error: It's not your turn, please wait for the opponent to make their move.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -385,8 +350,7 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
     }
 
     char movePlayed[2 * BUF_SIZE] = "\0";
-    snprintf(movePlayed, 2 * BUF_SIZE, "%s played %d!\n", client->username,
-             move.houseNum);
+    snprintf(movePlayed, 2 * BUF_SIZE, "%s played %d!\n", client->username, move.houseNum);
     writeClient(opponent->sock, movePlayed);
 
     gameSession->currentPlayer = next;
@@ -397,8 +361,7 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
     {
         strcpy(usernames[i], gameSession->players[i]->username);
     }
-    printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS,
-                     usernames);
+    printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, grid);
     writeClient(opponent->sock, grid);
     for (int i = 0; i < gameSession->numViewers; i++)
@@ -410,24 +373,20 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
 
     if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES))
     {
-        handleEndgame(gameSession, activeGameSessions, numActiveGames,
-                      gameSessions, numGames);
+        handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
     }
 
     return 1;
 }
 
-int suggestEndgame(Client *client, GameSession **activeGameSessions,
-                   int *numActiveGames, GameSession *gameSessions,
-                   int *numGames)
+int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
 {
     if (!client->gameId)
     {
         return 0;
     }
 
-    GameSession *gameSession = findGameSessionByClient(
-            client, activeGameSessions, *numActiveGames);
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     if (gameSession == NULL)
     {
         return 0;
@@ -437,8 +396,7 @@ int suggestEndgame(Client *client, GameSession **activeGameSessions,
     {
         if (gameSession->endGameSuggested == 1)
         {
-            handleEndgame(gameSession, activeGameSessions, numActiveGames,
-                          gameSessions, numGames);
+            handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
         }
         gameSession->endGameSuggested = 0;
     }
@@ -446,30 +404,25 @@ int suggestEndgame(Client *client, GameSession **activeGameSessions,
     {
         if (gameSession->endGameSuggested == 0)
         {
-            handleEndgame(gameSession, activeGameSessions, numActiveGames,
-                          gameSessions, numGames);
+            handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
         }
         gameSession->endGameSuggested = 1;
     }
 
-    Client *opponent =
-            gameSession->players[nextPlayer(gameSession->endGameSuggested)];
-    writeClient(opponent->sock,
-                "The opponent suggests ending this game. ACCEPTEND?\n");
+    Client *opponent = gameSession->players[nextPlayer(gameSession->endGameSuggested)];
+    writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?\n");
 
     return 1;
 }
 
-int acceptEndgame(Client *client, GameSession **activeGameSessions,
-                  int *numActiveGames, GameSession *gameSessions, int *numGames)
+int acceptEndgame(Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
 {
     if (!client->gameId)
     {
         return 0;
     }
 
-    GameSession *gameSession = findGameSessionByClient(
-            client, activeGameSessions, *numActiveGames);
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     if (gameSession == NULL)
     {
         return 0;
@@ -477,17 +430,14 @@ int acceptEndgame(Client *client, GameSession **activeGameSessions,
 
     if (gameSession->players[!gameSession->endGameSuggested] == client)
     {
-        handleEndgame(gameSession, activeGameSessions, numActiveGames,
-                      gameSessions, numGames);
+        handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
         return 1;
     }
 
     return 0;
 }
 
-void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions,
-                   int *numActiveGames, GameSession *gameSessions,
-                   int *numGames)
+void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
 {
     int winner = endGame(&gameSession->game);
 
@@ -497,10 +447,10 @@ void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions,
     {
         strcpy(usernames[i], gameSession->players[i]->username);
     }
-    printGameEndMessage(message, &gameSession->game, NUM_PLAYERS, winner,
-                        usernames);
+    printGameEndMessage(message, &gameSession->game, NUM_PLAYERS, winner, usernames);
     for (int i = 0; i < NUM_PLAYERS; i++)
     {
+
         writeClient(gameSession->players[i]->sock, message);
     }
 
@@ -516,10 +466,7 @@ void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions,
         else if (i == winner)
         {
             double prevAvg = gameSession->players[i]->stats.averageMovesToWin;
-            gameSession->players[i]->stats.averageMovesToWin =
-                    (prevAvg * gameSession->players[i]->stats.gamesWon +
-                     gameSession->numMoves / NUM_PLAYERS) /
-                    (gameSession->players[i]->stats.gamesWon + 1);
+            gameSession->players[i]->stats.averageMovesToWin = (prevAvg * gameSession->players[i]->stats.gamesWon + gameSession->numMoves / NUM_PLAYERS) / (gameSession->players[i]->stats.gamesWon + 1);
             gameSession->players[i]->stats.gamesWon++;
         }
         else
@@ -527,18 +474,15 @@ void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions,
             gameSession->players[i]->stats.gamesLost++;
         }
 
-        gameSession->players[i]->stats.totalSeedsCollected +=
-                gameSession->game.scores[i];
+        gameSession->players[i]->stats.totalSeedsCollected += gameSession->game.scores[i];
     }
 
-    removeActiveGameSession(activeGameSessions, numActiveGames,
-                            gameSession->id);
+    removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
     removeGameSession(gameSessions, numGames, gameSession->id);
     freeGame(&gameSession->game);
 }
 
-void listClients(Client **connectedClients, int actualConnected,
-                 Client requester)
+void listClients(Client **connectedClients, int actualConnected, Client requester)
 {
     char message[BUF_SIZE];
     message[0] = '\0';
@@ -548,7 +492,7 @@ void listClients(Client **connectedClients, int actualConnected,
     int maxLen = 0;
     for (int j = 0; j < actualConnected; j++)
     {
-        int currLen = (int) strlen(connectedClients[j]->username);
+        int currLen = (int)strlen(connectedClients[j]->username);
         if (currLen > maxLen)
         {
             maxLen = currLen;
@@ -557,17 +501,16 @@ void listClients(Client **connectedClients, int actualConnected,
 
     for (int i = 0; i < actualConnected; i++)
     {
-        strncat(message, connectedClients[i]->username,
-                BUF_SIZE - strlen(message) - 1);
+        strncat(message, connectedClients[i]->username, BUF_SIZE - strlen(message) - 1);
 
-        int pad = maxLen - (int) strlen(connectedClients[i]->username) + 1;
+        int pad = maxLen - (int)strlen(connectedClients[i]->username) + 1;
         if (pad < 1)
         {
             pad = 1;
         }
 
         char spaces[BUF_SIZE];
-        memset(spaces, ' ', (size_t) pad);
+        memset(spaces, ' ', (size_t)pad);
         spaces[pad] = '\0';
         strncat(message, spaces, BUF_SIZE - strlen(message) - 1);
 
@@ -596,8 +539,8 @@ void listGames(GameSession **gameSessions, int actualGame, Client requester)
         for (int i = 0; i < actualGame; i++)
         {
             char gameInfo[3 * BUF_SIZE];
-            snprintf(gameInfo, 3 * BUF_SIZE,
-                     "Game ID: %d | Players: %s vs %s\n", gameSessions[i]->id,
+            snprintf(gameInfo, 3 * BUF_SIZE, "Game ID: %d | Players: %s vs %s\n",
+                     gameSessions[i]->id,
                      gameSessions[i]->players[0]->username,
                      gameSessions[i]->players[1]->username);
             strncat(message, gameInfo, BUF_SIZE - strlen(message) - 1);
@@ -606,8 +549,7 @@ void listGames(GameSession **gameSessions, int actualGame, Client requester)
     writeClient(requester.sock, message);
 }
 
-int watchGame(Client *client, GameSession **gameSessions, int actualGame,
-              int gameId)
+int watchGame(Client *client, GameSession **gameSessions, int actualGame, int gameId)
 {
     if (client->gameId != NULL)
     {
@@ -635,8 +577,7 @@ int watchGame(Client *client, GameSession **gameSessions, int actualGame,
 
     if (gameSession->numViewers >= MAX_VIEWERS)
     {
-        char msg[] =
-                "Error: Maximum number of viewers reached for this game.\n";
+        char msg[] = "Error: Maximum number of viewers reached for this game.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -690,8 +631,7 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message)
 {
     if (gameSession == NULL)
     {
-        writeClient(sender->sock,
-                    "Error: You are not watching or playing any game.\n");
+        writeClient(sender->sock, "Error: You are not watching or playing any game.\n");
         return 0;
     }
 
@@ -706,8 +646,7 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message)
         }
     }
 
-    if (!found && sender->gameId != NULL &&
-        *(sender->gameId) != gameSession->id)
+    if (!found && sender->gameId != NULL && *(sender->gameId) != gameSession->id)
     {
         char msg[] = "Error: You are not part of this game.\n";
         writeClient(sender->sock, msg);
@@ -716,8 +655,7 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message)
 
     // Format message to add sender's name
     char formattedMessage[2 * BUF_SIZE];
-    snprintf(formattedMessage, 2 * BUF_SIZE, "%s (game chat): %s\n",
-             sender->username, message);
+    snprintf(formattedMessage, 2 * BUF_SIZE, "%s (game chat): %s\n", sender->username, message);
 
     // Send to viewers
     for (int i = 0; i < gameSession->numViewers; i++)
@@ -736,16 +674,13 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message)
     return 1;
 }
 
-void sendMP(Client **connectedClients, Client *sender, int actualConnected,
-            char *username, char *message)
+void sendMP(Client **connectedClients, Client *sender, int actualConnected, char *username, char *message)
 {
-    Client *client =
-            findClientByUsername(connectedClients, actualConnected, username);
+    Client *client = findClientByUsername(connectedClients, actualConnected, username);
 
     // Format message to add sender's name
     char formattedMessage[2 * BUF_SIZE];
-    snprintf(formattedMessage, 2 * BUF_SIZE, "%s (private): %s\n",
-             sender->username, message);
+    snprintf(formattedMessage, 2 * BUF_SIZE, "%s (private): %s\n", sender->username, message);
 
     if (client != NULL)
     {
@@ -760,8 +695,7 @@ void updateBio(Client *client, char bio[])
     writeClient(client->sock, msg);
 }
 
-int showBio(Client **connectedClients, int actualConnected, Client *requester,
-            char username[])
+int showBio(Client **connectedClients, int actualConnected, Client *requester, char username[])
 {
     Client *client;
     if (username == NULL || strlen(username) == 0)
@@ -770,8 +704,7 @@ int showBio(Client **connectedClients, int actualConnected, Client *requester,
     }
     else
     {
-        client = findClientByUsername(connectedClients, actualConnected,
-                                      username);
+        client = findClientByUsername(connectedClients, actualConnected, username);
         if (client == NULL)
         {
             char msg[] = "Error: User not found.\n";
@@ -802,14 +735,12 @@ int showBio(Client **connectedClients, int actualConnected, Client *requester,
     }
 
     char message[3 * BUF_SIZE];
-    snprintf(message, 3 * BUF_SIZE, "Bio of %s:\n%s", client->username,
-             client->bio);
+    snprintf(message, 3 * BUF_SIZE, "Bio of %s:\n%s", client->username, client->bio);
     writeClient(requester->sock, message);
     return 1;
 }
 
-int showStats(Client **connectedClients, int actualConnected, Client *requester,
-              char username[])
+int showStats(Client **connectedClients, int actualConnected, Client *requester, char username[])
 {
     Client *client;
     if (username == NULL || strlen(username) == 0)
@@ -818,8 +749,7 @@ int showStats(Client **connectedClients, int actualConnected, Client *requester,
     }
     else
     {
-        client = findClientByUsername(connectedClients, actualConnected,
-                                      username);
+        client = findClientByUsername(connectedClients, actualConnected, username);
         if (client == NULL)
         {
             char msg[] = "Error: User not found.\n";
@@ -850,22 +780,14 @@ int showStats(Client **connectedClients, int actualConnected, Client *requester,
     }
 
     char message[3 * BUF_SIZE];
-    snprintf(message, 3 * BUF_SIZE,
-             "Stats of %s:\n\tGames played: %d\n\tGames won: %d\n\tGames lost: "
-             "%d\n\tGames drawn: %d\n\tAverage number of moves to win: "
-             "%.0f\n\tTotal number of seeds collected: %d\n",
-             client->username, client->stats.gamesPlayed,
-             client->stats.gamesWon, client->stats.gamesLost,
-             client->stats.gamesDrawn, client->stats.averageMovesToWin,
-             client->stats.totalSeedsCollected);
+    snprintf(message, 3 * BUF_SIZE, "Stats of %s:\n\tGames played: %d\n\tGames won: %d\n\tGames lost: %d\n\tGames drawn: %d\n\tAverage number of moves to win: %.0f\n\tTotal number of seeds collected: %d\n", client->username, client->stats.gamesPlayed, client->stats.gamesWon, client->stats.gamesLost, client->stats.gamesDrawn, client->stats.averageMovesToWin, client->stats.totalSeedsCollected);
     writeClient(requester->sock, message);
     return 1;
 }
 
 int addFriend(Client *client, char username[])
 {
-    // doesn't check if user exists so that a disconnected user can still be
-    // added as a friend
+    // doesn't check if user exists so that a disconnected user can still be added as a friend
 
     // check if already friends
     for (int i = 0; i < client->numFriends; i++)
@@ -899,15 +821,12 @@ void setPrivacy(Client *client, int privacy)
     writeClient(client->sock, msg);
 }
 
-int quit(Client **connectedClients, int *actualConnected, Client *client,
-         GameSession **activeGameSessions, int *numActiveGames,
-         GameSession *gameSessions, int *numGames)
+int quit(Client **connectedClients, int *actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
 {
     // If the client is in a game, handle game termination
     if (client->gameId != NULL)
     {
-        GameSession *gameSession = findGameSessionByClient(
-                client, activeGameSessions, *numActiveGames);
+        GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
         if (gameSession != NULL)
         {
             // Notify the opponent
@@ -916,17 +835,13 @@ int quit(Client **connectedClients, int *actualConnected, Client *client,
                 if (gameSession->players[i] != client)
                 {
                     char msg[2 * BUF_SIZE];
-                    snprintf(msg, 2 * BUF_SIZE,
-                             "The opponent %s has disconnected. The game has "
-                             "been saved.\n",
-                             client->username);
+                    snprintf(msg, 2 * BUF_SIZE, "The opponent %s has disconnected. The game has been saved.\n", client->username);
                     writeClient(gameSession->players[i]->sock, msg);
                     gameSession->players[i]->gameId = NULL;
                 }
             }
 
-            removeActiveGameSession(activeGameSessions, numActiveGames,
-                                    gameSession->id);
+            removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
         }
 
         client->gameId = NULL;
@@ -942,30 +857,23 @@ int quit(Client **connectedClients, int *actualConnected, Client *client,
     int i = findClientIndex(connectedClients, *actualConnected, client);
     removeClient(connectedClients, i, actualConnected);
 
-    sendMessageToAllClients(connectedClients, client->username,
-                            *actualConnected, buffer, 1);
+    sendMessageToAllClients(connectedClients, client->username, *actualConnected, buffer, 1);
 
     return 1;
 }
 
-int loadGame(Client **connectedClients, int actualConnected, Client *client,
-             GameSession **activeGameSessions, int *numActiveGames,
-             GameSession *gameSessions, int *numGames)
+int loadGame(Client **connectedClients, int actualConnected, Client *client, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
 {
     if (*numGames == 0)
     {
-        char msg[] =
-                "Error: No saved games to load. Next time, quit by using the "
-                "QUIT command.\n";
+        char msg[] = "Error: No saved games to load. Next time, quit by using the QUIT command.\n";
         writeClient(client->sock, msg);
         return 0;
     }
 
     if (client->gameId != NULL)
     {
-        char msg[] =
-                "Error: You are already in a game. You cannot load another "
-                "game right now.\n";
+        char msg[] = "Error: You are already in a game. You cannot load another game right now.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -986,9 +894,7 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client,
 
     if (clientLastSavedGameIndex == -1)
     {
-        char msg[] =
-                "Error: You are not a player in any saved game. Next time, "
-                "quit by using the QUIT command.\n";
+        char msg[] = "Error: You are not a player in any saved game. Next time, quit by using the QUIT command.\n";
         writeClient(client->sock, msg);
         return 0;
     }
@@ -1004,9 +910,7 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client,
         }
         else if (player->gameId != NULL)
         {
-            char msg[] =
-                    "Error: Your opponent is already in a game. You can't "
-                    "resume this one right now.\n";
+            char msg[] = "Error: Your opponent is already in a game. You can't resume this one right now.\n";
             writeClient(client->sock, msg);
             return 0;
         }
@@ -1021,9 +925,7 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client,
         }
         if (j == actualConnected)
         {
-            char msg[] =
-                    "Error: Both players must be connected to load the saved "
-                    "game.\n";
+            char msg[] = "Error: Both players must be connected to load the saved game.\n";
             writeClient(client->sock, msg);
             return 0;
         }
@@ -1054,14 +956,12 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client,
     client->gameId = &gameSession->id;
 
     char msgStart[3 * BUF_SIZE] = "\0";
-    snprintf(msgStart, 3 * BUF_SIZE, "Game between %s and %s has resumed!\n",
-             challengerClient->username, client->username);
+    snprintf(msgStart, 3 * BUF_SIZE, "Game between %s and %s has resumed!\n", challengerClient->username, client->username);
     writeClient(client->sock, msgStart);
     writeClient(challengerClient->sock, msgStart);
 
     char msgGrid[BUF_SIZE] = "\0";
-    printGridMessage(msgGrid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS,
-                     usernames);
+    printGridMessage(msgGrid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, msgGrid);
     writeClient(challengerClient->sock, msgGrid);
     for (int i = 0; i < gameSession->numViewers; i++)
@@ -1069,8 +969,7 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client,
         writeClient(gameSession->viewers[i]->sock, msgGrid);
     }
 
-    writeClient(gameSession->players[gameSession->currentPlayer]->sock,
-                "It's your turn to shine!\n");
+    writeClient(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
 
     return 1;
 }
@@ -1087,110 +986,57 @@ void sendHelp(SOCKET sock, int loggedIn)
     {
         strcat(out, "\n");
         strcat(out, "Lobby:\n");
-        strcat(out,
-               "  HELP                                   - Show this help.\n");
-        strcat(out,
-               "  MSG <message>                          - Send a message to "
-               "the lobby.\n");
-        strcat(out,
-               "  LOGIN <username> <password>            - Log into an "
-               "existing account.\n");
-        strcat(out,
-               "  SIGNUP <username> <password>           - Create a new "
-               "account and connect.\n");
+        strcat(out, "  HELP                                   - Show this help.\n");
+        strcat(out, "  MSG <message>                          - Send a message to the lobby.\n");
+        strcat(out, "  LOGIN <username> <password>            - Log into an existing account.\n");
+        strcat(out, "  SIGNUP <username> <password>           - Create a new account and connect.\n");
     }
     else
     {
         strcat(out, "\n");
         strcat(out, "General:\n");
-        strcat(out,
-               "  HELP                                   - Show this help.\n");
-        strcat(out,
-               "  LIST                                   - List connected "
-               "users and if they are currently playing.\n");
-        strcat(out,
-               "  LISTGAMES                              - List ongoing "
-               "games.\n");
+        strcat(out, "  HELP                                   - Show this help.\n");
+        strcat(out, "  LIST                                   - List connected users and if they are currently playing.\n");
+        strcat(out, "  LISTGAMES                              - List ongoing games.\n");
         strcat(out, "  QUIT                                   - Disconnect.\n");
 
         strcat(out, "\n");
         strcat(out, "Challenges:\n");
-        strcat(out,
-               "  CHALLENGE <username>                   - Send a game "
-               "challenge.\n");
-        strcat(out,
-               "  ACCEPT <username>                      - Accept a pending "
-               "challenge.\n");
-        strcat(out,
-               "  DECLINE <username>                     - Decline a pending "
-               "challenge.\n");
-        strcat(out,
-               "  SEEPENDINGREQ                          - List received "
-               "challenges.\n");
-        strcat(out,
-               "  SEESENTREQ                             - List sent "
-               "challenges.\n");
-        strcat(out,
-               "  CLEARPENDINGREQ                        - Clear received "
-               "challenges.\n");
-        strcat(out,
-               "  CLEARSENTREQ                           - Clear sent "
-               "challenges.\n");
-        strcat(out,
-               "  REMOVESENTREQ <username>               - Unsend a "
-               "challenge.\n");
+        strcat(out, "  CHALLENGE <username>                   - Send a game challenge.\n");
+        strcat(out, "  ACCEPT <username>                      - Accept a pending challenge.\n");
+        strcat(out, "  DECLINE <username>                     - Decline a pending challenge.\n");
+        strcat(out, "  SEEPENDINGREQ                          - List received challenges.\n");
+        strcat(out, "  SEESENTREQ                             - List sent challenges.\n");
+        strcat(out, "  CLEARPENDINGREQ                        - Clear received challenges.\n");
+        strcat(out, "  CLEARSENTREQ                           - Clear sent challenges.\n");
+        strcat(out, "  REMOVESENTREQ <username>               - Unsend a challenge.\n");
 
         strcat(out, "\n");
         strcat(out, "Messaging:\n");
-        strcat(out,
-               "  MSG <message>                          - Send a message to "
-               "the general chat.\n");
-        strcat(out,
-               "  MSG @<username> <message>              - Send a private "
-               "message.\n");
+        strcat(out, "  MSG <message>                          - Send a message to the general chat.\n");
+        strcat(out, "  MSG @<username> <message>              - Send a private message.\n");
 
         strcat(out, "\n");
         strcat(out, "Game:\n");
-        strcat(out,
-               "  MSGGAME <message>                      - Send a message to "
-               "the current game chat.\n");
-        strcat(out,
-               "  MOVE <house>                           - Play a move when "
-               "it's your turn.\n");
-        strcat(out,
-               "  ENDGAME                                - Propose to end the "
-               "current game.\n");
-        strcat(out,
-               "  ACCEPTEND                              - Accept the endgame "
-               "proposal.\n");
-        strcat(out,
-               "  LASTGAME                               - Load your last "
-               "unfinished game.\n");
+        strcat(out, "  MSGGAME <message>                      - Send a message to the current game chat.\n");
+        strcat(out, "  MOVE <house>                           - Play a move when it's your turn.\n");
+        strcat(out, "  ENDGAME                                - Propose to end the current game.\n");
+        strcat(out, "  ACCEPTEND                              - Accept the endgame proposal.\n");
+        strcat(out, "  LASTGAME                               - Load your last unfinished game.\n");
 
         strcat(out, "\n");
         strcat(out, "Spectating:\n");
-        strcat(out,
-               "  LISTGAMES                              - List ongoing games "
-               "ids.\n");
-        strcat(out,
-               "  WATCH <gameId>                         - Watch a game "
-               "(respects privacy).\n");
-        strcat(out,
-               "  MSGGAME <message>                      - Send a message to "
-               "the watched game chat.\n");
+        strcat(out, "  LISTGAMES                              - List ongoing games ids.\n");
+        strcat(out, "  WATCH <gameId>                         - Watch a game (respects privacy).\n");
+        strcat(out, "  MSGGAME <message>                      - Send a message to the watched game chat.\n");
 
         strcat(out, "\n");
         strcat(out, "Profile:\n");
-        strcat(out,
-               "  BIO <text>                             - Update your bio.\n");
-        strcat(out,
-               "  SHOWBIO [username]                     - Show your or "
-               "someone's bio (respects privacy).\n");
-        strcat(out,
-               "  ADDFRIEND <username>                   - Add a friend.\n");
-        strcat(out,
-               "  SETPRIVACY <true|false>                - true makes your "
-               "bio/game private to friends.\n");
+        strcat(out, "  BIO <text>                             - Update your bio.\n");
+        strcat(out, "  SHOWBIO [username]                     - Show your or someone's bio (respects privacy).\n");
+        strcat(out, "  SHOWSTATS [username]                   - Show your or someone's stats (respects privacy).\n");
+        strcat(out, "  ADDFRIEND <username>                   - Add a friend.\n");
+        strcat(out, "  SETPRIVACY <true|false>                - true makes your bio/game private to friends.\n");
     }
 
     writeClient(sock, out);
