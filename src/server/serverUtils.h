@@ -70,6 +70,7 @@ void endConnection(int sock);
 int readClient(SOCKET sock, char *buffer);
 void writeClient(SOCKET sock, const char *buffer);
 void sendMessageToAllClients(Client **connectedClients, char sender[], int actualConnected, const char *buffer, char from_server);
+void initClient(Client *clients, int *actualClient, SOCKET sock, char username[], char password[]);
 Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[]);
 GameSession *findGameSessionByClient(Client *client, GameSession **gameSessions, int actualGame);
 void sendMessageToClient(Client **connectedClients, Client *sender, int actualConnected, char username[], const char *buffer);

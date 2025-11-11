@@ -92,6 +92,19 @@ void sendMessageToLobby(SOCKET *lobby, int actualLobby, const char *message)
    }
 }
 
+void initClient(Client *clients, int *actualClient, SOCKET sock, char username[], char password[])
+{
+   clients[*actualClient].sock = sock;
+   strncpy(clients[*actualClient].username, username, BUF_SIZE - 1);
+   strncpy(clients[*actualClient].password, password, BUF_SIZE - 1);
+   clients[*actualClient].gameId = NULL;
+   clients[*actualClient].numFriends = 0;
+   clients[*actualClient].numPendingChallengesTo = 0;
+   clients[*actualClient].numPendingChallengesFrom = 0;
+   clients[*actualClient].bio[0] = '\0';
+   clients[*actualClient].private = 0;
+}
+
 Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[])
 {
    for (int i = 0; i < actualConnected; i++)

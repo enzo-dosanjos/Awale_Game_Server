@@ -20,15 +20,7 @@ int signUp(Client *clients, int *actualClient, Client **connectedClients, int *a
         }
     }
 
-    clients[*actualClient].sock = lobby[index];
-    strncpy(clients[*actualClient].username, username, BUF_SIZE - 1);
-    strncpy(clients[*actualClient].password, password, BUF_SIZE - 1);
-    clients[*actualClient].gameId = NULL;
-    clients[*actualClient].numFriends = 0;
-    clients[*actualClient].numPendingChallengesTo = 0;
-    clients[*actualClient].numPendingChallengesFrom = 0;
-    clients[*actualClient].bio[0] = '\0';
-    clients[*actualClient].private = 0;
+    initClient(clients, actualClient, lobby[index], username, password);
 
     connectedClients[*actualConnected] = &clients[*actualClient];
     (*actualClient)++;
