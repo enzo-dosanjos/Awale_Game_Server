@@ -5,6 +5,17 @@
 #include <string.h>
 #include <time.h>
 
+// For saveGameAndSend
+#ifdef _WIN32
+  #include <direct.h>
+  #define MKDIR(path) _mkdir(path)
+#else
+  #include <sys/stat.h>
+  #include <sys/types.h>
+  #define MKDIR(path) mkdir(path, 0755)
+#endif
+
+
 int signUp(Client *clients, int *actualClient, Client **connectedClients, int *actualConnected, SOCKET *lobby, int *actualLobby, int index, char *username, char *password)
 {
     if (*actualClient >= MAX_CLIENTS - 1)
@@ -191,6 +202,10 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
     gameSession.endGameSuggested = -1;
     gameSession.numViewers = 0;
 
+    // Init historiques
+    gameSession.numMovesRecorded = 0;
+    gameSession.numGameMessages = 0;
+
     gameSessions[*numGames] = gameSession;
     activeGameSessions[*numActiveGames] = &gameSessions[*numGames];
     (*numGames)++;
@@ -199,20 +214,23 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
     challengerClient->gameId = &gameSessions[(*numGames) - 1].id;
     client->gameId = &gameSessions[(*numGames) - 1].id;
 
-    message[0] = '\0';
+    char grid[BUF_SIZE] = "\0";
     char usernames[NUM_PLAYERS][BUF_SIZE];
     for (int i = 0; i < NUM_PLAYERS; i++)
     {
         strcpy(usernames[i], gameSession.players[i]->username);
     }
-    printGridMessage(message, &gameSession.game, NUM_HOUSES, NUM_PLAYERS, usernames);
-    writeClient(client->sock, message);
-    writeClient(challengerClient->sock, message);
+    printGridMessage(grid, &gameSession.game, NUM_HOUSES, NUM_PLAYERS, usernames);
+    writeClient(client->sock, grid);
+    writeClient(challengerClient->sock, grid);
     for (int i = 0; i < gameSession.numViewers; i++)
     {
-        writeClient(gameSession.viewers[i]->sock, message);
+        writeClient(gameSession.viewers[i]->sock, grid);
     }
     writeClient(gameSession.players[gameSession.currentPlayer]->sock, "It's your turn to shine!\n");
+
+    // Save game state for history
+    recordMove(&gameSessions[(*numGames) - 1], NULL, grid);
 
     return 1;
 }
@@ -369,6 +387,9 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, 
         writeClient(gameSession->viewers[i]->sock, grid);
     }
 
+    // Save game state for history
+    recordMove(gameSession, &move, grid);
+
     gameSession->numMoves++;
 
     if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES))
@@ -440,6 +461,21 @@ int acceptEndgame(Client *client, GameSession **activeGameSessions, int *numActi
 void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
 {
     int winner = endGame(&gameSession->game);
+
+    // Ask the players if they want to save the game
+    char saveMsg[] = "The game has ended. Do you want to save the game? (yes/no): ";
+    for (int i = 0; i < NUM_PLAYERS; i++)
+    {
+        writeClient(gameSession->players[i]->sock, saveMsg);
+
+        char response[BUF_SIZE];
+        readClient(gameSession->players[i]->sock, response);
+
+        if (strcmp(response, "yes") == 0 || strcmp(response, "y") == 0)
+        {
+            saveGameAndSend(gameSession->players[i], activeGameSessions, *numActiveGames);
+        }
+    }
 
     char message[BUF_SIZE] = "\0";
     char usernames[NUM_PLAYERS][BUF_SIZE];
@@ -670,6 +706,9 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message)
         Client *player = gameSession->players[i];
         writeClient(player->sock, formattedMessage);
     }
+
+    // Log the message in game history
+    recordChat(gameSession, sender->username, message);
 
     return 1;
 }
@@ -1040,4 +1079,116 @@ void sendHelp(SOCKET sock, int loggedIn)
     }
 
     writeClient(sock, out);
+}
+
+int saveGameAndSend(Client *client, GameSession **activeGameSessions, int numActiveGames)
+{
+    if (!client->gameId) {
+        writeClient(client->sock, "Error: You are not currently in a game.\n");
+        return 0;
+    }
+
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, numActiveGames);
+    if (!gameSession) {
+        return 0;
+    }
+
+    // Create the save dir and file
+    MKDIR(SAVE_DIR);
+    char filepath[2*BUF_SIZE];
+    char filename[BUF_SIZE];
+    sprintf(filename, "game_%d.txt", gameSession->id);
+    sprintf(filepath, "%s/%s", SAVE_DIR, filename);
+
+
+    // check if the file already exists (created for the other player)
+    int already_saved = 0;
+    FILE *fcheck = fopen(filepath, "rb");
+    if (fcheck) {
+        already_saved = 1;
+        fclose(fcheck);
+    }
+
+    if (!already_saved)
+    {
+        FILE *file = fopen(filepath, "wb");
+        if (!file) {
+            writeClient(client->sock, "Error: Could not save the game.\n");
+            return 0;
+        }
+
+        // header
+        fprintf(file, "Full game export\n");
+        fprintf(file, "Game ID: %d\n", gameSession->id);
+        fprintf(file, "Players: %s vs %s\n", gameSession->players[0]->username, gameSession->players[1]->username);
+        fprintf(file, "Moves played: %d\n", gameSession->numMoves);
+        fprintf(file, "Current player: %s\n",
+                gameSession->players[gameSession->currentPlayer]->username);
+        fprintf(file, "Scores: %s=%d, %s=%d\n\n",
+                gameSession->players[0]->username, gameSession->game.scores[0],
+                gameSession->players[1]->username, gameSession->game.scores[1]);
+
+        // moves history
+        fprintf(file, "=== Moves history ===\n");
+        for (int i = 0; i < gameSession->numMovesRecorded; i++) {
+            MoveRecord *moveRecord = &gameSession->movesHistory[i];
+
+            char tbuf[64];
+            formatTime(moveRecord->t, tbuf, sizeof(tbuf));
+
+            const char *playerName = gameSession->players[moveRecord->playerNum]->username;
+            if (moveRecord->playerNum > -1 && moveRecord->house > -1) {
+                fprintf(file, "Move %d | %s | player=%s | house=%d\n",
+                        moveRecord->number, tbuf, playerName, moveRecord->house);
+            }
+
+            fputs(moveRecord->grid, file);
+            fputc('\n', file);
+        }
+
+        if (gameSession->numMovesRecorded == 0) {
+            fprintf(file, "(no moves recorded yet)\n");
+        }
+
+        fputc('\n', file);
+
+
+        // chat history
+        fprintf(file, "=== Game chat ===\n");
+        for (int i = 0; i < gameSession->numGameMessages; i++) {
+            ChatRecord *chatrecord = &gameSession->gameMessages[i];
+
+            char tbuf[64];
+            formatTime(chatrecord->t, tbuf, sizeof(tbuf));
+
+            fprintf(file, "[%s] %s: %s\n", tbuf, chatrecord->sender, chatrecord->text);
+        }
+
+        if (gameSession->numGameMessages == 0) {
+            fprintf(file, "(no chat messages)\n");
+        }
+
+        fclose(file);
+    }
+
+
+    // Send file to client
+    char begin[2*BUF_SIZE];
+    sprintf(begin, "BEGIN_SAVED_GAME %s\n", filename);
+    writeClient(client->sock, begin);
+
+    FILE *readFile = fopen(filepath, "r");
+    if (!readFile) {
+        writeClient(client->sock, "Error: Failed to read saved file.\nEND_SAVED_GAME\n");
+        return 0;
+    }
+    char line[2*BUF_SIZE];
+    while (fgets(line, sizeof(line), readFile)) {
+        writeClient(client->sock, line);
+    }
+    fclose(readFile);
+
+    writeClient(client->sock, "END_SAVED_GAME\n");
+
+    return 1;
 }

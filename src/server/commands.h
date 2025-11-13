@@ -87,4 +87,7 @@ int loadGame(Client **connectedClients, int actualConnected, Client *client,
 
 void sendHelp(SOCKET sock, int loggedIn);
 
+int saveGameAndSend(Client *client, GameSession **activeGameSessions,
+                    int numActiveGames);
+
 #endif // AWALE_GAME_SERVER_COMMANDS_H

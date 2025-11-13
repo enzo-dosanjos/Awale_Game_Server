@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "serverUtils.h"
 
@@ -109,6 +110,58 @@ void initClient(Client *clients, int *actualClient, SOCKET sock, char username[]
    clients[*actualClient].stats.gamesDrawn = 0;
    clients[*actualClient].stats.averageMovesToWin = 0.0;
    clients[*actualClient].stats.totalSeedsCollected = 0;
+}
+
+void recordMove(GameSession *gameSession, const Move *move, const char *grid)
+{
+    if (gameSession->numMovesRecorded < MAX_MOVES_HISTORY)
+    {
+        MoveRecord *moveRecord = &gameSession->movesHistory[gameSession->numMovesRecorded];
+        moveRecord->number = gameSession->numMoves;
+        if (move == NULL) {
+            moveRecord->playerNum = -1; // Indicate no move was made
+            moveRecord->house = -1;
+        } else {
+            moveRecord->playerNum = move->numPlayer;
+            moveRecord->house = move->houseNum;
+        }
+        moveRecord->t = time(NULL);
+
+        strcpy(moveRecord->grid, grid);
+        moveRecord->grid[BUF_SIZE - 1] = '\0';  // Ensure null-termination
+
+        gameSession->numMovesRecorded++;
+    }
+}
+
+void recordChat(GameSession *gameSession, const char *sender, const char *text)
+{
+    if (gameSession->numGameMessages < MAX_MESSAGES_HISTORY)
+    {
+        ChatRecord *chatRecord = &gameSession->gameMessages[gameSession->numGameMessages];
+        strcpy(chatRecord->sender, sender);
+        chatRecord->sender[BUF_SIZE - 1] = '\0';  // Ensure null-termination
+
+        strcpy(chatRecord->text, text);
+        chatRecord->text[BUF_SIZE - 1] = '\0';
+
+        chatRecord->t = time(NULL);
+
+        gameSession->numGameMessages++;
+    }
+}
+
+void formatTime(time_t t, char *out, size_t outSize) {
+    struct tm *lt = localtime(&t);
+    if (lt)
+    {
+        strftime(out, outSize, "%Y-%m-%d %H:%M:%S", lt);
+    }
+    else
+    {
+        strncpy(out, "unknown", outSize - 1);
+        out[outSize - 1] = '\0';
+    }
 }
 
 Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[])

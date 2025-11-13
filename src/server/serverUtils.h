@@ -7,13 +7,13 @@
 
 #else
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h> /* gethostbyname */
 #include <netinet/in.h>
 #include <sys/select.h>
-#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h> /* close */
-#include <netdb.h>  /* gethostbyname */
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define closesocket(s) close(s)
@@ -24,8 +24,8 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
-#include "../game/gameUtils.h"
 #include "../constants.h"
+#include "../game/gameUtils.h"
 
 #include <errno.h>
 
@@ -39,6 +39,21 @@ typedef struct
     int totalSeedsCollected;
 } Stats;
 
+typedef struct
+{
+    int number; // move number
+    int playerNum;
+    int house;
+    time_t t;
+    char grid[BUF_SIZE]; // grid after the move
+} MoveRecord;
+
+typedef struct
+{
+    char sender[BUF_SIZE];
+    char text[BUF_SIZE];
+    time_t t;
+} ChatRecord;
 
 typedef struct
 {
@@ -57,7 +72,7 @@ typedef struct
     // received challenges from
     int numPendingChallengesFrom;
     char pendingChallengesFrom[MAX_PENDING_CHALLENGES][BUF_SIZE];
-    //stats
+    // stats
     Stats stats;
 } Client;
 
@@ -72,6 +87,12 @@ typedef struct
     // viewers
     int numViewers;
     Client *viewers[MAX_VIEWERS];
+    // game history
+    MoveRecord movesHistory[MAX_MOVES_HISTORY];
+    int numMovesRecorded;
+    ChatRecord gameMessages[MAX_MESSAGES_HISTORY];
+    int numGameMessages;
+
 } GameSession;
 
 void initServer(void);
@@ -81,22 +102,40 @@ int initConnectionServer(void);
 void endConnection(int sock);
 int readClient(SOCKET sock, char *buffer);
 void writeClient(SOCKET sock, const char *buffer);
-void sendMessageToAllClients(Client **connectedClients, char sender[], int actualConnected, const char *buffer, char from_server);
-void initClient(Client *clients, int *actualClient, SOCKET sock, char username[], char password[]);
-Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[]);
-GameSession *findGameSessionByClient(Client *client, GameSession **gameSessions, int actualGame);
-void sendMessageToClient(Client **connectedClients, Client *sender, int actualConnected, char username[], const char *buffer);
+void sendMessageToAllClients(Client **connectedClients, char sender[],
+                             int actualConnected, const char *buffer,
+                             char from_server);
+void initClient(Client *clients, int *actualClient, SOCKET sock,
+                char username[], char password[]);
+
+void recordMove(GameSession *gameSession, const Move *move, const char *grid);
+
+void recordChat(GameSession *gameSession, const char *sender, const char *text);
+
+void formatTime(time_t t, char *out, size_t outSize);
+
+Client *findClientByUsername(Client **connectedClients, int actualConnected,
+                             char username[]);
+GameSession *findGameSessionByClient(Client *client, GameSession **gameSessions,
+                                     int actualGame);
+void sendMessageToClient(Client **connectedClients, Client *sender,
+                         int actualConnected, char username[],
+                         const char *buffer);
 void sendMessageToLobby(SOCKET *lobby, int actualLobby, const char *buffer);
-void removeClient(Client **connectedClients, int to_remove, int *actualConnected);
+void removeClient(Client **connectedClients, int to_remove,
+                  int *actualConnected);
 void removeFromLobby(SOCKET *lobby, int to_remove, int *actualLobby);
 void clearClients(Client **connectedClients, int actualConnected);
 int addChallenge(Client *challenger, Client *challenged);
 int removeChallenge(Client *client, Client *challenged);
 void clearSentChallenge(Client *client);
 void clearReceivedChallenge(Client *client);
-int findClientIndex(Client **connectedClients, int actualConnected, Client *client);
-GameSession *findGameSessionByViewer(GameSession **gameSessions, int actualGame, Client *viewer);
-int removeActiveGameSession(GameSession **activeGameSessions, int *numGames, int gameId);
+int findClientIndex(Client **connectedClients, int actualConnected,
+                    Client *client);
+GameSession *findGameSessionByViewer(GameSession **gameSessions, int actualGame,
+                                     Client *viewer);
+int removeActiveGameSession(GameSession **activeGameSessions, int *numGames,
+                            int gameId);
 int removeGameSession(GameSession *gameSessions, int *numGames, int gameId);
 int removeSavedGame(GameSession *savedGames, int *numSavedGames, int gameId);
 

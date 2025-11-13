@@ -70,6 +70,26 @@ void appClient(const char *address)
         else if (FD_ISSET(sock, &rdfs))
         {
             int n = readServer(sock, buffer);
+
+            if (strncmp(buffer, "BEGIN_SAVED_GAME", 16) == 0)
+            {
+                // read filename
+                char filename[BUF_SIZE];
+                filename[0] = '\0';
+                if (sscanf(buffer, "BEGIN_SAVED_GAME %s", filename) != 1) {
+                    printf("Failed to save game.\n");
+                    continue;
+                }
+
+                // receive game file
+                if (receiveGameAndSave(sock, filename)) {
+                    printf("Game saved successfully at %s.\n", filename);
+                } else {
+                    printf("Failed to save game.\n");
+                }
+                continue;
+            }
+
             /* server down */
             if (n == 0)
             {
@@ -140,6 +160,62 @@ void writeServer(SOCKET sock, const char *buffer)
         exit(errno);
     }
 }
+
+static int endsWithEndMarker(const char *buffer, size_t *posBeforeEnd)
+{
+    // look for "END_SAVED_GAME"
+    const char *p = strstr(buffer, "END_SAVED_GAME");
+
+    // end marker not found
+    if (!p)
+    {
+        return 0;
+    }
+
+    // calculate position before the end marker
+    size_t ind = (size_t)(p - buffer);
+    if (posBeforeEnd)
+    {
+        *posBeforeEnd = ind;
+    }
+
+    return 1;
+}
+
+int receiveGameAndSave(SOCKET sock, const char *filename)
+{
+    FILE *file = fopen(filename, "wb");
+    if (!file) {
+        printf("Error: Failed to create save file.\n");
+        return 0;
+    }
+
+    char buf[2*BUF_SIZE];
+    int n;
+    while ((n = readServer(sock, buf)) > 0)
+    {
+        size_t beforeEnd = 0;
+        if (endsWithEndMarker(buf, &beforeEnd))
+        {
+            // Write up to the position before the end marker
+            if (file && beforeEnd > 0)
+            {
+                fwrite(buf, 1, beforeEnd, file);
+            }
+            break;
+        }
+
+        // If there's no end marker, write the entire buffer
+        if (file && n > 0) {
+            fwrite(buf, 1, n, file);
+        }
+    }
+
+    fclose(file);
+
+    return 1;
+}
+
 
 int main(int argc, char **argv)
 {

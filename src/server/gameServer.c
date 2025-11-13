@@ -336,6 +336,10 @@ void appServer(void)
                   {
                      loadGame(connectedClients, actualConnected, client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
                   }
+                  else if (strcmp(command, "SAVEGAME") == 0)
+                  {
+                      saveGameAndSend(client, activeGameSessions, numActiveGames);
+                  }
                   else if (strcmp(command, "HELP") == 0)
                   {
                      sendHelp(client->sock, 1);
