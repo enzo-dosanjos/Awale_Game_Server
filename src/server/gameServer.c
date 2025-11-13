@@ -258,6 +258,25 @@ void appServer(void)
 
                      addFriend(client, username);
                   }
+                  else if (strcmp(command, "REMOVEFRIEND") == 0)
+                  {
+                      char *username = strtok(NULL, " ");
+                      if (username == NULL)
+                      {
+                          char msg[] = "Error: No username provided to remove from friends. Use: REMOVEFRIEND <username>\n";
+                          writeClient(client->sock, msg);
+                          continue;
+                      }
+
+                      removeFriend(client, username);
+                  }
+                  else if (strcmp(command, "SHOWFRIENDS") == 0)
+                  {
+                      char *username = strtok(NULL, " ");
+                      // username can be NULL here to show own bio
+
+                      showFriends(connectedClients, actualConnected, client, username);
+                  }
                   else if (strcmp(command, "WATCH") == 0)
                   {
                      char *gameIdStr = strtok(NULL, "");

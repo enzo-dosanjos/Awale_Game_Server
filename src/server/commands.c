@@ -838,6 +838,93 @@ int addFriend(Client *client, char username[])
     return 1;
 }
 
+int removeFriend(Client *client, char username[])
+{
+    int found = 0;
+    for (int i = 0; i < client->numFriends; i++)
+    {
+        if (strcmp(client->friends[i], username) == 0)
+        {
+            found = 1;
+            // shift friends down
+            for (int j = i; j < client->numFriends - 1; j++)
+            {
+                strcpy(client->friends[j], client->friends[j + 1]);
+            }
+            client->numFriends--;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        char msg[] = "Error: This user is not your friend.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    return 1;
+}
+
+int showFriends(Client **clients, int actualClient, Client *requester, char username[])
+{
+    Client *client;
+    if (username == NULL || strlen(username) == 0)
+    {
+        client = requester;
+    }
+    else
+    {
+        client = findClientByUsername(clients, actualClient, username);
+        if (client == NULL)
+        {
+            char msg[] = "Error: User not found.\n";
+            writeClient(requester->sock, msg);
+            return 0;
+        }
+
+        if (client->private)
+        {
+            // check if requester is a friend
+            int found = 0;
+            for (int i = 0; i < client->numFriends; i++)
+            {
+                if (strcmp(client->friends[i], requester->username) == 0)
+                {
+                    found = 1;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                char msg[] = "Error: This user's friends list is private.\n";
+                writeClient(requester->sock, msg);
+                return 0;
+            }
+        }
+    }
+
+    char message[2*BUF_SIZE];
+
+    sprintf(message, "Friends of %s:\n", client->username);
+    if (client->numFriends == 0)
+    {
+        strcat(message, "No friends added yet.\n");
+    }
+    else
+    {
+        for (int i = 0; i < client->numFriends; i++)
+        {
+            strcat(message, client->friends[i]);
+            strcat(message, "\n");
+        }
+    }
+
+    writeClient(requester->sock, message);
+    return 1;
+}
+
 void setPrivacy(Client *client, int privacy)
 {
     client->private = privacy;

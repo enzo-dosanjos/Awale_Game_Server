@@ -70,6 +70,10 @@ int showStats(Client **connectedClients, int actualConnected, Client *requester,
 
 int addFriend(Client *client, char username[]);
 
+int removeFriend(Client *client, char username[]);
+
+int showFriends(Client **clients, int actualClient, Client *requester, char username[]);
+
 void setPrivacy(Client *client, int privacy);
 
 int watchGame(Client *client, GameSession **gameSessions, int actualGame,
