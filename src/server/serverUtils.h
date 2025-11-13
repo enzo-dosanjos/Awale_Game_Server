@@ -115,8 +115,9 @@ void recordChat(GameSession *gameSession, const char *sender, const char *text);
 
 void formatTime(time_t t, char *out, size_t outSize);
 
-Client *findClientByUsername(Client **connectedClients, int actualConnected,
+Client *findConnectedClientByUsername(Client **connectedClients, int actualConnected,
                              char username[]);
+Client *findClientByUsername(Client *clients, int actualClient, char username[]);
 GameSession *findGameSessionByClient(Client *client, GameSession **gameSessions,
                                      int actualGame);
 void sendMessageToClient(Client **connectedClients, Client *sender,

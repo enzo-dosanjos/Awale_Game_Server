@@ -152,7 +152,7 @@ void appServer(void)
                         continue;
                      }
 
-                     declineChallenge(connectedClients, client, actualConnected, username);
+                     declineChallenge(clients, client, actualClient, username);
                   }
                   else if (strcmp(command, "LIST") == 0)
                   {
@@ -188,7 +188,7 @@ void appServer(void)
                         continue;
                      }
 
-                     removeSentReq(connectedClients, client, actualConnected, username);
+                     removeSentReq(clients, client, actualClient, username);
                   }
                   else if (strcmp(command, "MOVE") == 0)
                   {
@@ -256,7 +256,7 @@ void appServer(void)
                         continue;
                      }
 
-                     addFriend(client, username);
+                     addFriend(clients, actualClient, client, username);
                   }
                   else if (strcmp(command, "REMOVEFRIEND") == 0)
                   {
@@ -275,7 +275,7 @@ void appServer(void)
                       char *username = strtok(NULL, " ");
                       // username can be NULL here to show own bio
 
-                      showFriends(connectedClients, actualConnected, client, username);
+                      showFriends(clients, actualClient, client, username);
                   }
                   else if (strcmp(command, "WATCH") == 0)
                   {
@@ -319,14 +319,14 @@ void appServer(void)
                      char *username = strtok(NULL, " ");
                      // username can be NULL here to show own bio
 
-                     showBio(connectedClients, actualConnected, client, username);
+                     showBio(clients, actualClient, client, username);
                   }
                   else if (strcmp(command, "SHOWSTATS") == 0)
                   {
                      char *username = strtok(NULL, " ");
                      // username can be NULL here to show own stats
 
-                     showStats(connectedClients, actualConnected, client, username);
+                     showStats(clients, actualClient, client, username);
                   }
                   else if (strcmp(command, "SETPRIVACY") == 0)
                   {

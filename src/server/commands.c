@@ -120,7 +120,7 @@ int challenge(Client **connectedClients, Client *challenger, int actualConnected
         return 0;
     }
 
-    Client *challenged = findClientByUsername(connectedClients, actualConnected, username);
+    Client *challenged = findConnectedClientByUsername(connectedClients, actualConnected, username);
     if (challenged == NULL)
     {
         char msg[] = "Error: User not found.\n";
@@ -142,7 +142,7 @@ int challenge(Client **connectedClients, Client *challenger, int actualConnected
 
 int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSessions, int *numGames, GameSession **activeGameSessions, int *numActiveGames)
 {
-    Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
+    Client *challengerClient = findConnectedClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL)
     {
         // challenger not found
@@ -220,9 +220,9 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
     return 1;
 }
 
-int declineChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[])
+int declineChallenge(Client *clients, Client *client, int actualClients, char challenger[])
 {
-    Client *challengerClient = findClientByUsername(connectedClients, actualConnected, challenger);
+    Client *challengerClient = findClientByUsername(clients, actualClients, challenger);
     if (challengerClient == NULL)
     {
         // challenger not found
@@ -297,9 +297,9 @@ void clearSentReq(Client *client)
     writeClient(client->sock, msg);
 }
 
-int removeSentReq(Client **connectedClients, Client *client, int actualConnected, char username[])
+int removeSentReq(Client *clients, Client *client, int actualClient, char username[])
 {
-    Client *challengedClient = findClientByUsername(connectedClients, actualConnected, username);
+    Client *challengedClient = findClientByUsername(clients, actualClient, username);
     if (challengedClient == NULL)
     {
         char msg[] = "Error: User not found.\n";
@@ -700,16 +700,19 @@ int SendMsgGame(GameSession *gameSession, Client *sender, char *message)
 
 void sendMP(Client **connectedClients, Client *sender, int actualConnected, char *username, char *message)
 {
-    Client *client = findClientByUsername(connectedClients, actualConnected, username);
+    Client *client = findConnectedClientByUsername(connectedClients, actualConnected, username);
+    if (client == NULL)
+    {
+        char msg[] = "Error: User not found.\n";
+        writeClient(sender->sock, msg);
+        return;
+    }
 
     // Format message to add sender's name
     char formattedMessage[2 * BUF_SIZE];
     snprintf(formattedMessage, 2 * BUF_SIZE, "%s (private): %s\n", sender->username, message);
 
-    if (client != NULL)
-    {
-        writeClient(client->sock, formattedMessage);
-    }
+    writeClient(client->sock, formattedMessage);
 }
 
 void updateBio(Client *client, char bio[])
@@ -719,7 +722,7 @@ void updateBio(Client *client, char bio[])
     writeClient(client->sock, msg);
 }
 
-int showBio(Client **connectedClients, int actualConnected, Client *requester, char username[])
+int showBio(Client *clients, int actualClient, Client *requester, char username[])
 {
     Client *client;
     if (username == NULL || strlen(username) == 0)
@@ -728,7 +731,7 @@ int showBio(Client **connectedClients, int actualConnected, Client *requester, c
     }
     else
     {
-        client = findClientByUsername(connectedClients, actualConnected, username);
+        client = findClientByUsername(clients, actualClient, username);
         if (client == NULL)
         {
             char msg[] = "Error: User not found.\n";
@@ -764,7 +767,7 @@ int showBio(Client **connectedClients, int actualConnected, Client *requester, c
     return 1;
 }
 
-int showStats(Client **connectedClients, int actualConnected, Client *requester, char username[])
+int showStats(Client *clients, int actualClient, Client *requester, char username[])
 {
     Client *client;
     if (username == NULL || strlen(username) == 0)
@@ -773,7 +776,7 @@ int showStats(Client **connectedClients, int actualConnected, Client *requester,
     }
     else
     {
-        client = findClientByUsername(connectedClients, actualConnected, username);
+        client = findClientByUsername(clients, actualClient, username);
         if (client == NULL)
         {
             char msg[] = "Error: User not found.\n";
@@ -809,9 +812,22 @@ int showStats(Client **connectedClients, int actualConnected, Client *requester,
     return 1;
 }
 
-int addFriend(Client *client, char username[])
+int addFriend(Client *clients, int actualClient, Client *client, char username[])
 {
-    // doesn't check if user exists so that a disconnected user can still be added as a friend
+    if (strcmp(client->username, username) == 0)
+    {
+        char msg[] = "Error: You cannot add yourself as a friend.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
+
+    Client *friend = findClientByUsername(clients, actualClient, username);
+    if (friend == NULL)
+    {
+        char msg[] = "Error: User not found.\n";
+        writeClient(client->sock, msg);
+        return 0;
+    }
 
     // check if already friends
     for (int i = 0; i < client->numFriends; i++)
@@ -866,7 +882,7 @@ int removeFriend(Client *client, char username[])
     return 1;
 }
 
-int showFriends(Client **clients, int actualClient, Client *requester, char username[])
+int showFriends(Client *clients, int actualClient, Client *requester, char username[])
 {
     Client *client;
     if (username == NULL || strlen(username) == 0)

@@ -23,8 +23,7 @@ int acceptChallenge(Client **connectedClients, Client *client,
                     GameSession *gameSessions, int *numGames,
                     GameSession **activeGameSessions, int *numActiveGames);
 
-int declineChallenge(Client **connectedClients, Client *client,
-                     int actualConnected, char challenger[]);
+int declineChallenge(Client *clients, Client *client, int actualClients, char challenger[]);
 
 int move(Client *client, GameSession **activeGameSessions, int *numActiveGames,
          GameSession *gameSessions, int *numGames, int house);
@@ -54,25 +53,22 @@ void clearPendingReq(Client *client);
 
 void clearSentReq(Client *client);
 
-int removeSentReq(Client **connectedClients, Client *client,
-                  int actualConnected, char username[]);
+int removeSentReq(Client *clients, Client *client, int actualClient, char username[]);
 
 void sendMP(Client **connectedClients, Client *sender, int actualConnected,
             char *username, char *message);
 
 void updateBio(Client *client, char bio[]);
 
-int showBio(Client **connectedClients, int actualConnected, Client *requester,
-            char username[]);
+int showBio(Client *clients, int actualClient, Client *requester, char username[]);
 
-int showStats(Client **connectedClients, int actualConnected, Client *requester,
-              char username[]);
+int showStats(Client *clients, int actualClient, Client *requester, char username[]);
 
-int addFriend(Client *client, char username[]);
+int addFriend(Client *clients, int actualClient, Client *client, char username[]);
 
 int removeFriend(Client *client, char username[]);
 
-int showFriends(Client **clients, int actualClient, Client *requester, char username[]);
+int showFriends(Client *clients, int actualClient, Client *requester, char username[]);
 
 void setPrivacy(Client *client, int privacy);
 

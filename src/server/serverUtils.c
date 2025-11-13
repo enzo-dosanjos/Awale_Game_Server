@@ -187,7 +187,7 @@ void formatTime(time_t t, char *out, size_t outSize) {
     }
 }
 
-Client *findClientByUsername(Client **connectedClients, int actualConnected, char username[])
+Client *findConnectedClientByUsername(Client **connectedClients, int actualConnected, char username[])
 {
    for (int i = 0; i < actualConnected; i++)
    {
@@ -198,6 +198,19 @@ Client *findClientByUsername(Client **connectedClients, int actualConnected, cha
    }
    return NULL; // Not found
 }
+
+Client *findClientByUsername(Client *clients, int actualClient, char username[])
+{
+    for (int i = 0; i < actualClient; i++)
+    {
+        if (strcmp(clients[i].username, username) == 0)
+        {
+            return &clients[i];
+        }
+    }
+    return NULL; // Not found
+}
+
 
 int findClientIndex(Client **connectedClients, int actualConnected, Client *client)
 {
@@ -234,7 +247,7 @@ void sendMessageToClient(Client **connectedClients, Client *sender, int actualCo
       strncat(message, " : ", sizeof message - strlen(message) - 1);
    }
 
-   Client *client = findClientByUsername(connectedClients, actualConnected, username);
+   Client *client = findConnectedClientByUsername(connectedClients, actualConnected, username);
    if (client != NULL)
    {
       strncat(message, buffer, sizeof message - strlen(message) - 1);
