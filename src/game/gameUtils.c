@@ -130,7 +130,7 @@ void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers,
         {
             game->scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
-            i = (i - 1) % (nbHouses * nbPlayers);
+            i = (i - 1  + nbHouses * nbPlayers) % (nbHouses * nbPlayers);
         }
     }
 }
