@@ -112,6 +112,29 @@ void initClient(Client *clients, int *actualClient, SOCKET sock, char username[]
    clients[*actualClient].stats.totalSeedsCollected = 0;
 }
 
+GameSession *initGameSession(GameSession *gameSessions, int *numGames, Game *game, int firstPlayer, Client *player1, Client *player2)
+{
+   GameSession *gameSession = &gameSessions[*numGames];
+
+   gameSession->game = *game;
+   gameSession->currentPlayer = firstPlayer;
+
+   gameSession->numMoves = 1;
+
+   gameSession->players[0] = player1;
+   gameSession->players[1] = player2;
+   gameSession->id = (int)time(NULL); // timestamp
+   gameSession->endGameSuggested = -1;
+   gameSession->numViewers = 0;
+
+   gameSession->numMovesRecorded = 0;
+   gameSession->numGameMessages = 0;
+
+   (*numGames)++;
+
+   return gameSession;
+}
+
 void recordMove(GameSession *gameSession, const Move *move, const char *grid)
 {
     if (gameSession->numMovesRecorded < MAX_MOVES_HISTORY)

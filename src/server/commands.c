@@ -190,47 +190,32 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
     int rotation = atoi(rotationStr);
 
     Game game = startGame(rotation);
+    int firstPlayer = playerSelector();
+    GameSession *gameSession = initGameSession(gameSessions, numGames, &game, firstPlayer, challengerClient, client);
 
-    GameSession gameSession;
-    gameSession.game = game;
-    gameSession.currentPlayer = playerSelector();
-    gameSession.numMoves = 1;
-
-    gameSession.players[0] = challengerClient;
-    gameSession.players[1] = client;
-    gameSession.id = (int)time(NULL); // timestamp
-    gameSession.endGameSuggested = -1;
-    gameSession.numViewers = 0;
-
-    // Init historiques
-    gameSession.numMovesRecorded = 0;
-    gameSession.numGameMessages = 0;
-
-    gameSessions[*numGames] = gameSession;
-    activeGameSessions[*numActiveGames] = &gameSessions[*numGames];
-    (*numGames)++;
+    activeGameSessions[*numActiveGames] = gameSession;
     (*numActiveGames)++;
 
-    challengerClient->gameId = &gameSessions[(*numGames) - 1].id;
-    client->gameId = &gameSessions[(*numGames) - 1].id;
+    challengerClient->gameId = &gameSession->id;
+    client->gameId = &gameSession->id;
 
     char grid[BUF_SIZE] = "\0";
     char usernames[NUM_PLAYERS][BUF_SIZE];
     for (int i = 0; i < NUM_PLAYERS; i++)
     {
-        strcpy(usernames[i], gameSession.players[i]->username);
+        strcpy(usernames[i], gameSession->players[i]->username);
     }
-    printGridMessage(grid, &gameSession.game, NUM_HOUSES, NUM_PLAYERS, usernames);
+    printGridMessage(grid, &gameSession->game, NUM_HOUSES, NUM_PLAYERS, usernames);
     writeClient(client->sock, grid);
     writeClient(challengerClient->sock, grid);
-    for (int i = 0; i < gameSession.numViewers; i++)
+    for (int i = 0; i < gameSession->numViewers; i++)
     {
-        writeClient(gameSession.viewers[i]->sock, grid);
+        writeClient(gameSession->viewers[i]->sock, grid);
     }
-    writeClient(gameSession.players[gameSession.currentPlayer]->sock, "It's your turn to shine!\n");
+    writeClient(gameSession->players[gameSession->currentPlayer]->sock, "It's your turn to shine!\n");
 
     // Save game state for history
-    recordMove(&gameSessions[(*numGames) - 1], NULL, grid);
+    recordMove(gameSession, NULL, grid);
 
     return 1;
 }

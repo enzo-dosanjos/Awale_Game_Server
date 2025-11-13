@@ -107,6 +107,7 @@ void sendMessageToAllClients(Client **connectedClients, char sender[],
                              char from_server);
 void initClient(Client *clients, int *actualClient, SOCKET sock,
                 char username[], char password[]);
+GameSession *initGameSession(GameSession *gameSessions, int *numGameSessions, Game *game, int firstPlayer, Client *player1, Client *player2);
 
 void recordMove(GameSession *gameSession, const Move *move, const char *grid);
 
