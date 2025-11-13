@@ -1150,6 +1150,7 @@ void sendHelp(SOCKET sock, int loggedIn)
         strcat(out, "  ENDGAME                                - Propose to end the current game.\n");
         strcat(out, "  ACCEPTEND                              - Accept the endgame proposal.\n");
         strcat(out, "  LASTGAME                               - Load your last unfinished game.\n");
+        strcat(out, "  SAVEGAME                               - Save the current game.\n");
 
         strcat(out, "\n");
         strcat(out, "Spectating:\n");
@@ -1163,6 +1164,8 @@ void sendHelp(SOCKET sock, int loggedIn)
         strcat(out, "  SHOWBIO [username]                     - Show your or someone's bio (respects privacy).\n");
         strcat(out, "  SHOWSTATS [username]                   - Show your or someone's stats (respects privacy).\n");
         strcat(out, "  ADDFRIEND <username>                   - Add a friend.\n");
+        strcat(out, "  REMOVEFRIEND <username>                - Remove a friend.\n");
+        strcat(out, "  SHOWFRIENDS [username]                 - Show your or someone's friends list (respects privacy).\n");
         strcat(out, "  SETPRIVACY <true|false>                - true makes your bio/game private to friends.\n");
     }
 
