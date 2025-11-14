@@ -107,6 +107,8 @@ int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
         return -1; // The move is legal, but no captures can be made
     }
 
+    freeGame(&tempGame);
+
     return 1;
 }
 
