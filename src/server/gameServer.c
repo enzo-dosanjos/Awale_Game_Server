@@ -458,6 +458,6 @@ void appServer(void)
       }
    }
 
-   clearClients(connectedClients, actualConnected);
+   freeServerData(connectedClients, actualConnected, lobby, actualLobby, activeGameSessions, numActiveGames);
    endConnection(sock);
 }

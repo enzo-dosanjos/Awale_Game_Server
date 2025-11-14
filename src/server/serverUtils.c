@@ -447,3 +447,22 @@ int removeGameSession(GameSession *gameSessions, int *numGames, int gameId)
 
    return 1;
 }
+
+void freeServerData(Client **connectedClients, int actualConnected, SOCKET *lobby, int actualLobby, GameSession **gameSessions, int numGames)
+{
+    int i;
+    // Close all client sockets
+    clearClients(connectedClients, actualConnected);
+
+    for (i = 0; i < actualLobby; i++)
+    {
+        closesocket(lobby[i]);
+    }
+
+    // Free all dynamically allocated game data
+    for (i = 0; i < numGames; i++)
+    {
+        freeGame(&gameSessions[i]->game);
+    }
+}
+

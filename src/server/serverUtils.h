@@ -142,5 +142,6 @@ int removeActiveGameSession(GameSession **activeGameSessions, int *numGames,
                             int gameId);
 int removeGameSession(GameSession *gameSessions, int *numGames, int gameId);
 int removeSavedGame(GameSession *savedGames, int *numSavedGames, int gameId);
+void freeServerData(Client **connectedClients, int actualConnected, SOCKET *lobby, int actualLobby, GameSession **gameSessions, int numGames);
 
 #endif // AWALE_SERVER_UTILS_GAMESERVER_H
