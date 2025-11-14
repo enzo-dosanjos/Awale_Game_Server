@@ -74,6 +74,12 @@ int checkFamishedPlayer(Game *game, int numPlayer, int nbHouses)
 
 int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
 {
+    if (move.numPlayer < 0 || move.numPlayer >= nbPlayers ||
+        move.houseNum < 0 || move.houseNum >= nbHouses)
+    {
+        return 0;
+    }
+
     // Check if the house is empty
     if (game->grid[move.numPlayer][move.houseNum] == 0)
     {
