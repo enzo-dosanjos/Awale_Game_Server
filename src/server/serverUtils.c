@@ -125,6 +125,7 @@ GameSession *initGameSession(GameSession *gameSessions, int *numGames, Game *gam
    gameSession->players[1] = player2;
    gameSession->id = (int)time(NULL); // timestamp
    gameSession->endGameSuggested = -1;
+   gameSession->saveAnswered = 0;
    gameSession->numViewers = 0;
 
    gameSession->numMovesRecorded = 0;

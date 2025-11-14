@@ -76,6 +76,10 @@ void appServer(void)
       /* something from standard input : i.e keyboard */
       if (FD_ISSET(STDIN_FILENO, &rdfs))
       {
+         /* clear input buffer */
+         char buffer[BUF_SIZE];
+         read(STDIN_FILENO, buffer, BUF_SIZE);
+
          /* stop process when type on keyboard */
          break;
       }
@@ -140,7 +144,15 @@ void appServer(void)
                         continue;
                      }
 
-                     acceptChallenge(connectedClients, client, actualConnected, username, gameSessions, &numGames, activeGameSessions, &numActiveGames);
+                     acceptChallenge(connectedClients, client, actualConnected, username, &numGames, activeGameSessions, &numActiveGames);
+                  }
+                  else if (strcmp(command, "HIDDEN_STARTGAME") == 0)
+                  {
+                     char *username = strtok(NULL, " ");
+                     char *rotationStr = strtok(NULL, "");
+                     int rotation = atoi(rotationStr);
+
+                     handleStartGame(client, connectedClients, actualConnected, username, gameSessions, &numGames, activeGameSessions, &numActiveGames, rotation);
                   }
                   else if (strcmp(command, "DECLINE") == 0)
                   {
@@ -210,6 +222,19 @@ void appServer(void)
                   else if (strcmp(command, "ACCEPTEND") == 0)
                   {
                      acceptEndgame(client, activeGameSessions, &numActiveGames, gameSessions, &numGames);
+                  }
+                  else if (strcmp(command, "HIDDEN_HANDLEENDGAME") == 0)
+                  {
+                     char *flag = strtok(NULL, "");
+                     if (flag == NULL)
+                     {
+                        char msg[] = "An error occurred while handling your request, the game could not be saved.\n";
+                        writeClient(client->sock, msg);
+                     }
+
+                     int saveFlag = (flag != NULL && (strncmp(flag, "Y", 1) == 0 || strncmp(flag, "y", 1) == 0)) ? 1 : 0;
+
+                     handleEndgamePlayer(client, connectedClients, actualConnected, activeGameSessions, &numActiveGames, gameSessions, &numGames, saveFlag);
                   }
                   else if (strcmp(command, "MSG") == 0)
                   {

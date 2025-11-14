@@ -140,7 +140,7 @@ int challenge(Client **connectedClients, Client *challenger, int actualConnected
     return 1;
 }
 
-int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], GameSession *gameSessions, int *numGames, GameSession **activeGameSessions, int *numActiveGames)
+int acceptChallenge(Client **connectedClients, Client *client, int actualConnected, char challenger[], int *numGames, GameSession **activeGameSessions, int *numActiveGames)
 {
     Client *challengerClient = findConnectedClientByUsername(connectedClients, actualConnected, challenger);
     if (challengerClient == NULL)
@@ -182,12 +182,21 @@ int acceptChallenge(Client **connectedClients, Client *client, int actualConnect
     snprintf(message, 2 * BUF_SIZE, "CHALLENGE_ACCEPTED_BY %s", client->username);
     writeClient(challengerClient->sock, message);
 
-    strcpy(message, "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
-    writeClient(client->sock, message);
+    // Ask for rotation, then start the game
+    char rotationMsg[2*BUF_SIZE];
+    snprintf(rotationMsg, 2*BUF_SIZE, "CLIENT_INPUT HIDDEN_STARTGAME 1 %s Enter rotation (0 for counter-clockwise, 1 for clockwise): ", challengerClient->username);
+    writeClient(client->sock, rotationMsg);
 
-    char rotationStr[2];
-    readClient(client->sock, rotationStr);
-    int rotation = atoi(rotationStr);
+    return 1;
+}
+
+int handleStartGame(Client *client, Client **connectedClients, int actualConnected, char challenger[], GameSession *gameSessions, int *numGames, GameSession **activeGameSessions, int *numActiveGames, int rotation)
+{
+    Client *challengerClient = findConnectedClientByUsername(connectedClients, actualConnected, challenger);
+    if (challengerClient == NULL)
+    {
+        return 0;
+    }
 
     Game game = startGame(rotation);
     int firstPlayer = playerSelector();
@@ -379,7 +388,12 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, 
 
     if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES))
     {
-        handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
+        // Ask the players if they want to save the game, then handle endgame
+        char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
+        for (int i = 0; i < NUM_PLAYERS; i++)
+        {
+            writeClient(gameSession->players[i]->sock, saveMsg);
+        }
     }
 
     return 1;
@@ -402,7 +416,12 @@ int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numAct
     {
         if (gameSession->endGameSuggested == 1)
         {
-            handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
+            // Ask the players if they want to save the game, then handle endgame
+            char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
+            for (int i = 0; i < NUM_PLAYERS; i++)
+            {
+                writeClient(gameSession->players[i]->sock, saveMsg);
+            }
         }
         gameSession->endGameSuggested = 0;
     }
@@ -410,7 +429,12 @@ int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numAct
     {
         if (gameSession->endGameSuggested == 0)
         {
-            handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
+            // Ask the players if they want to save the game, then handle endgame
+            char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
+            for (int i = 0; i < NUM_PLAYERS; i++)
+            {
+                writeClient(gameSession->players[i]->sock, saveMsg);
+            }
         }
         gameSession->endGameSuggested = 1;
     }
@@ -436,30 +460,27 @@ int acceptEndgame(Client *client, GameSession **activeGameSessions, int *numActi
 
     if (gameSession->players[!gameSession->endGameSuggested] == client)
     {
-        handleEndgame(gameSession, activeGameSessions, numActiveGames, gameSessions, numGames);
+        // Ask the players if they want to save the game, then handle endgame
+        char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
+        for (int i = 0; i < NUM_PLAYERS; i++)
+        {
+            writeClient(gameSession->players[i]->sock, saveMsg);
+        }
+        
         return 1;
     }
 
     return 0;
 }
 
-void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames)
+void handleEndgamePlayer(Client *client, Client **connectedClients, int actualConnected, GameSession **activeGameSessions, int *numActiveGames, GameSession *gameSessions, int *numGames, int saveFlag)
 {
+    GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
     int winner = endGame(&gameSession->game);
 
-    // Ask the players if they want to save the game
-    char saveMsg[] = "The game has ended. Do you want to save the game? (yes/no): ";
-    for (int i = 0; i < NUM_PLAYERS; i++)
+    if (saveFlag)
     {
-        writeClient(gameSession->players[i]->sock, saveMsg);
-
-        char response[BUF_SIZE];
-        readClient(gameSession->players[i]->sock, response);
-
-        if (strcmp(response, "yes") == 0 || strcmp(response, "y") == 0)
-        {
-            saveGameAndSend(gameSession->players[i], activeGameSessions, *numActiveGames);
-        }
+        saveGameAndSend(client, activeGameSessions, *numActiveGames);
     }
 
     char message[BUF_SIZE] = "\0";
@@ -469,38 +490,36 @@ void handleEndgame(GameSession *gameSession, GameSession **activeGameSessions, i
         strcpy(usernames[i], gameSession->players[i]->username);
     }
     printGameEndMessage(message, &gameSession->game, NUM_PLAYERS, winner, usernames);
-    for (int i = 0; i < NUM_PLAYERS; i++)
-    {
+    writeClient(client->sock, message);
 
-        writeClient(gameSession->players[i]->sock, message);
+    client->gameId = NULL;
+    client->stats.gamesPlayed++;
+
+    if (winner == -1)
+    {
+        client->stats.gamesDrawn++;
+    }
+    else if (client == gameSession->players[winner])
+    {
+        double prevAvg = client->stats.averageMovesToWin;
+        client->stats.averageMovesToWin = (prevAvg * client->stats.gamesWon + gameSession->numMoves / NUM_PLAYERS) / (client->stats.gamesWon + 1);
+        client->stats.gamesWon++;
+    }
+    else
+    {
+        client->stats.gamesLost++;
     }
 
-    for (int i = 0; i < NUM_PLAYERS; i++)
-    {
-        gameSession->players[i]->gameId = NULL;
-        gameSession->players[i]->stats.gamesPlayed++;
+    int i = findClientIndex(connectedClients, actualConnected, client);
+    client->stats.totalSeedsCollected += gameSession->game.scores[i];
 
-        if (winner == -1)
-        {
-            gameSession->players[i]->stats.gamesDrawn++;
-        }
-        else if (i == winner)
-        {
-            double prevAvg = gameSession->players[i]->stats.averageMovesToWin;
-            gameSession->players[i]->stats.averageMovesToWin = (prevAvg * gameSession->players[i]->stats.gamesWon + gameSession->numMoves / NUM_PLAYERS) / (gameSession->players[i]->stats.gamesWon + 1);
-            gameSession->players[i]->stats.gamesWon++;
-        }
-        else
-        {
-            gameSession->players[i]->stats.gamesLost++;
-        }
+    gameSession->saveAnswered++;
 
-        gameSession->players[i]->stats.totalSeedsCollected += gameSession->game.scores[i];
+    if (gameSession->saveAnswered == NUM_PLAYERS) {
+        removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
+        removeGameSession(gameSessions, numGames, gameSession->id);
+        freeGame(&gameSession->game);
     }
-
-    removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
-    removeGameSession(gameSessions, numGames, gameSession->id);
-    freeGame(&gameSession->game);
 }
 
 void listClients(Client **connectedClients, int actualConnected, Client requester)
@@ -1181,6 +1200,7 @@ int saveGameAndSend(Client *client, GameSession **activeGameSessions, int numAct
 
     GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, numActiveGames);
     if (!gameSession) {
+        writeClient(client->sock, "Error: Could not find your game session.\n");
         return 0;
     }
 
