@@ -198,8 +198,8 @@ int handleStartGame(Client *client, Client **connectedClients, int actualConnect
         return 0;
     }
 
-    Game game = startGame(rotation);
-    int firstPlayer = playerSelector();
+    Game game = startGame(rotation, NUM_PLAYERS, NUM_HOUSES, NUM_SEEDS);
+    int firstPlayer = playerSelector(&game);
     GameSession *gameSession = initGameSession(gameSessions, numGames, &game, firstPlayer, challengerClient, client);
 
     activeGameSessions[*numActiveGames] = gameSession;
@@ -350,7 +350,7 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, 
         return 0;
     }
 
-    int next = nextPlayer(gameSession->currentPlayer);
+    int next = nextPlayer(gameSession->currentPlayer, &gameSession->game);
     Client *opponent = gameSession->players[next];
     move.numPlayer = gameSession->currentPlayer;
 
@@ -386,7 +386,7 @@ int move(Client *client, GameSession **activeGameSessions, int *numActiveGames, 
 
     gameSession->numMoves++;
 
-    if (isGameOver(&gameSession->game, NUM_PLAYERS, NUM_HOUSES))
+    if (isGameOver(&gameSession->game))
     {
         // Ask the players if they want to save the game, then handle endgame
         char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
@@ -439,7 +439,7 @@ int suggestEndgame(Client *client, GameSession **activeGameSessions, int *numAct
         gameSession->endGameSuggested = 1;
     }
 
-    Client *opponent = gameSession->players[nextPlayer(gameSession->endGameSuggested)];
+    Client *opponent = gameSession->players[nextPlayer(gameSession->endGameSuggested, &gameSession->game)];
     writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?\n");
 
     return 1;

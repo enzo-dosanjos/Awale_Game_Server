@@ -2,64 +2,65 @@
 
 #include "gameUtils.h"
 
-int **initGrid(int nbPlayers, int nbHouses, int nbSeeds)
+void initGrid(Game *game, int numSeeds)
 {
-    int **grid = malloc(nbPlayers * sizeof(int *));
-    int *data = malloc(nbPlayers * nbHouses * sizeof(int));
+    game->grid = malloc(game->numPlayers * sizeof(int *));
+    int *data = malloc(game->numPlayers * game->numHouses * sizeof(int));
 
-    for (int i = 0; i < nbPlayers; i++)
+    for (int i = 0; i < game->numPlayers; i++)
     {
-        grid[i] = data + i * nbHouses;
+        game->grid[i] = data + i * game->numHouses;
     }
 
-    int nbSeedsPerHouse = nbSeeds / (nbHouses * nbPlayers);
+    int nbSeedsPerHouse = numSeeds / (game->numHouses * game->numPlayers);
 
-    for (int i = 0; i < nbPlayers; i++)
+    for (int i = 0; i < game->numPlayers; i++)
     {
-        for (int j = 0; j < nbHouses; j++)
+        for (int j = 0; j < game->numHouses; j++)
         {
-            grid[i][j] = nbSeedsPerHouse;
+            game->grid[i][j] = nbSeedsPerHouse;
         }
     }
-
-    return grid;
 }
 
-void copyGame(Game *game, Game *copy, int nbPlayers, int nbHouses)
+void copyGame(Game *game, Game *copy)
 {
-    int **grid = malloc(nbPlayers * sizeof(int *));
-    int *data = malloc(nbPlayers * nbHouses * sizeof(int));
+    copy->grid = malloc(game->numPlayers * sizeof(int *));
+    int *data = malloc(game->numPlayers * game->numHouses * sizeof(int));
 
-    for (int i = 0; i < nbPlayers; i++)
+    for (int i = 0; i < game->numPlayers; i++)
     {
-        grid[i] = data + i * nbHouses;
+        copy->grid[i] = data + i * game->numHouses;
     }
 
-    for (int i = 0; i < nbPlayers; i++)
+    for (int i = 0; i < game->numPlayers; i++)
     {
-        for (int j = 0; j < nbHouses; j++)
+        for (int j = 0; j < game->numHouses; j++)
         {
-            grid[i][j] = game->grid[i][j];
+            copy->grid[i][j] = game->grid[i][j];
         }
     }
 
-    copy->grid = grid;
+    copy->numPlayers = game->numPlayers;
+    copy->numHouses = game->numHouses;
+
     copy->rotation = game->rotation;
-    copy->scores = malloc(nbPlayers * sizeof(int));
-    for (int i = 0; i < nbPlayers; i++)
+
+    copy->scores = malloc(game->numPlayers * sizeof(int));
+    for (int i = 0; i < game->numPlayers; i++)
     {
         copy->scores[i] = game->scores[i];
     }
 }
 
-int checkFamishedPlayer(Game *game, int numPlayer, int nbHouses)
+int checkFamishedPlayer(Game *game, int playerNum)
 {
     int empty = 1;
 
     int i = 0;
-    while (i < nbHouses && empty)
+    while (i < game->numHouses && empty)
     {
-        if (game->grid[numPlayer][i] != 0)
+        if (game->grid[playerNum][i] != 0)
         {
             empty = 0;
         }
@@ -72,10 +73,10 @@ int checkFamishedPlayer(Game *game, int numPlayer, int nbHouses)
     return 0;
 }
 
-int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
+int checkLegalMove(Game *game, Move move)
 {
-    if (move.numPlayer < 0 || move.numPlayer >= nbPlayers ||
-        move.houseNum < 0 || move.houseNum >= nbHouses)
+    if (move.numPlayer < 0 || move.numPlayer >= game->numPlayers ||
+        move.houseNum < 0 || move.houseNum >= game->numHouses)
     {
         return 0;
     }
@@ -86,14 +87,13 @@ int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
         return 0;
     }
 
-    int famishedCurr = checkFamishedPlayer(
-            game, (move.numPlayer + 1) % nbPlayers, nbHouses);
+    int famishedCurr = checkFamishedPlayer(game, (move.numPlayer + 1) % game->numPlayers);
 
     Game tempGame;
-    copyGame(game, &tempGame, nbPlayers, nbHouses);
-    makeAMove(&tempGame, move, 1, nbPlayers, nbHouses);
+    copyGame(game, &tempGame);
+    makeAMove(&tempGame, move, 1);
     int famishedNext = checkFamishedPlayer(
-            &tempGame, (move.numPlayer + 1) % nbPlayers, nbHouses);
+            &tempGame, (move.numPlayer + 1) % game->numPlayers);
 
     // Check if the move feeds a famished opponent
     if (famishedCurr && famishedNext)
@@ -112,40 +112,39 @@ int checkLegalMove(Game *game, Move move, int nbPlayers, int nbHouses)
     return 1;
 }
 
-void makeAMove(Game *game, Move move, int capturesOk, int nbPlayers,
-               int nbHouses)
+void makeAMove(Game *game, Move move, int capturesOk)
 {
     int *gameGrid = &game->grid[0][0];
 
-    int houseInd = move.numPlayer * nbHouses + move.houseNum;
+    int houseInd = move.numPlayer * game->numHouses + move.houseNum;
     int numSeeds = game->grid[move.numPlayer][move.houseNum];
 
     int i;
-    int skip = numSeeds / (nbHouses * nbPlayers);
+    int skip = numSeeds / (game->numHouses * game->numPlayers);
     for (i = houseInd + 1; i < houseInd + 1 + numSeeds + skip; i++)
     {
-        gameGrid[i % (nbHouses * nbPlayers)]++;
+        gameGrid[i % (game->numHouses * game->numPlayers)]++;
     }
 
     gameGrid[houseInd] = 0;
 
     if (capturesOk)
     {
-        i = (i - 1) % (nbHouses * nbPlayers);
+        i = (i - 1) % (game->numHouses * game->numPlayers);
 
-        while ((i / nbHouses != move.numPlayer) &&
+        while ((i / game->numHouses != move.numPlayer) &&
                (gameGrid[i] == 2 || gameGrid[i] == 3))
         {
             game->scores[move.numPlayer] += gameGrid[i];
             gameGrid[i] = 0;
-            i = (i - 1  + nbHouses * nbPlayers) % (nbHouses * nbPlayers);
+            i = (i - 1  + game->numHouses * game->numPlayers) % (game->numHouses * game->numPlayers);
         }
     }
 }
 
-int isGameOver(Game *game, int nbPlayers, int nbHouses)
+int isGameOver(Game *game)
 {
-    for (int i = 0; i < nbPlayers; i++)
+    for (int i = 0; i < game->numPlayers; i++)
     {
         int noLegalMoves = 1;
 
@@ -156,10 +155,10 @@ int isGameOver(Game *game, int nbPlayers, int nbHouses)
 
         Move move;
         move.numPlayer = i;
-        for (int j = 0; j < nbHouses; j++)
+        for (int j = 0; j < game->numHouses; j++)
         {
             move.houseNum = j;
-            if (checkLegalMove(game, move, nbPlayers, nbHouses))
+            if (checkLegalMove(game, move))
             {
                 noLegalMoves = 0;
             }
