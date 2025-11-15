@@ -4,6 +4,8 @@
 #include <string.h>
 
 #include "client.h"
+#include "../constants.h"
+
 
 void initClient(void)
 {
