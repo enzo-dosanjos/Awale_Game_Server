@@ -368,7 +368,7 @@ void clearSentChallenge(Client *client)
 
 void clearReceivedChallenge(Client *client)
 {
-   client->numPendingChallengesTo = 0;
+   client->numPendingChallengesFrom = 0;
 }
 
 GameSession *findGameSessionByViewer(GameSession **gameSessions, int actualGame, Client *viewer)
