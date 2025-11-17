@@ -1,4 +1,4 @@
-#include "gameServer.h"
+#include "networking/gameServer.h"
 
 #include <stdlib.h>
 

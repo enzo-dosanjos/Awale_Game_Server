@@ -8,7 +8,12 @@ TARGET := $(ServTARGET) $(ClientTARGET)
 BUILD_DIR := build
 
 SERVSOURCES = src/game/gameLogic.c src/game/gameUtils.c src/game/ihm.c \
-			  src/server/gameServer.c src/server/mainServer.c src/server/commands.c src/server/serverUtils.c
+			  src/server/dataManagers/clientManager.c src/server/dataManagers/gameSessionManager.c \
+			  src/server/commandProcessor.c \
+			  src/server/commands/chatService.c src/server/commands/accountService.c src/server/commands/challengeService.c \
+			  src/server/commands/gameService.c src/server/commands/generalService.c src/server/commands/profileService.c \
+			  src/server/mainServer.c \
+              src/server/networking/gameServer.c src/server/networking/serverUtils.c
 CLIENTSOURCES = src/client/client.c
 SERVOBJECTS = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SERVSOURCES))
 CLIENTOBJECTS = $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CLIENTSOURCES))

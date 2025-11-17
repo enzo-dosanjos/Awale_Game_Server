@@ -14,6 +14,29 @@ This project implements a networked Awale game with:
 
 The server is multi\-client and text\-command based. The same commands are documented in the `HELP` command on the server.
 
+The server is implemented with the following layered architecture:
+- Presentation / Transport layer (network I/O, sockets, main loop):
+    - mainServer.c
+    - server/networking/gameServer.c
+- Application / Command layer (command parsing & orchestration):
+    - server/commandProcessor.c
+- Service layer:
+    - server/commands/challengeService
+    - server/commands/gameService.c
+    - server/commands/userService.c
+    - server/commands/accountService.c
+    - server/commands/chatService.c
+    - server/commands/generalService.c
+- Domain layer:
+    - server/dataManagers/clientManager.c
+    - server/dataManagers/gameSessionManager.c
+    - server/networking/serverUtils.c
+    - game/gameLogic.c
+    - game/gameUtils.c
+    - game/ihm.c
+- Data layer:
+    - server/data/data.h 
+
 ---
 
 ## 2. Requirements
