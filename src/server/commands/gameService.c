@@ -261,7 +261,9 @@ void game_handleEndForPlayer(Client *client,
         client->stats.gamesLost++;
     }
 
-    int i = findClientIndex(connectedClients, actualConnected, client);
+    int i = 0;
+    while ((i < NUM_PLAYERS) && (gameSession->players[i] != client))
+        i++;
     client->stats.totalSeedsCollected += gameSession->game.scores[i];
 
     gameSession->saveAnswered++;
