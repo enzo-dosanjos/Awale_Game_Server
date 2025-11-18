@@ -101,9 +101,7 @@ int challenge_accept(Client **connectedClients, Client *client,
     writeClient(challengerClient->sock, message);
 
     // Ask for rotation, then start the game
-    char rotationMsg[2*BUF_SIZE];
-    snprintf(rotationMsg, 2*BUF_SIZE, "CLIENT_INPUT HIDDEN_STARTGAME 1 %s Enter rotation (0 for counter-clockwise, 1 for clockwise): ", challengerClient->username);
-    writeClient(client->sock, rotationMsg);
+    askClientInput(client->sock, "HIDDEN_STARTGAME", "1", challengerClient->username, "1", "Enter rotation (0 for counter-clockwise, 1 for clockwise): ");
 
     return 1;
 }

@@ -178,3 +178,13 @@ void freeServerData(Client **connectedClients, int actualConnected,
     }
 }
 
+void askClientInput(SOCKET sock, char *command, char* defaultValue,
+                    char *parametersList, char *numParams, char *message)
+// Sends a formatted input request to the client socket.
+// Errors : none
+{
+   char saveMsg[BUF_SIZE];
+   sprintf(saveMsg, "CLIENT_INPUT;%s;%s;%s;%s;%s", command, defaultValue, numParams, parametersList ? parametersList : "_", message);
+
+   writeClient(sock, saveMsg);
+}

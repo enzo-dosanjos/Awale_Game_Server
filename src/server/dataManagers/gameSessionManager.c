@@ -23,8 +23,11 @@ GameSession *initGameSession(GameSession *gameSessions, int *numGames,
     gameSession->players[0] = player1;
     gameSession->players[1] = player2;
     gameSession->id = (int)time(NULL); // timestamp
-    gameSession->endGameSuggested = -1;
-    gameSession->saveAnswered = 0;
+    gameSession->endGame = -1;
+    for (int i = 0; i < NUM_PLAYERS; i++)
+    {
+        gameSession->saveAnswered[i] = 0;
+    }
     gameSession->numViewers = 0;
 
     gameSession->numMovesRecorded = 0;

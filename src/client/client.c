@@ -82,49 +82,7 @@ void appClient(const char *address)
             
             if (strncmp(buffer, "CLIENT_INPUT", 12) == 0)
             {
-                strtok(buffer, " "); // skip command
-                char *new_command = strtok(NULL, " ");
-                char *default_choice = strtok(NULL, " ");
-                char *parameter = strtok(NULL, " ");
-                char *message = strtok(NULL, "");
-
-                printf("%s\n", message);
-
-                char choice[BUF_SIZE];
-
-                // Use select to implement a 10-second timeout for user input
-                fd_set input_rdfs;
-                FD_ZERO(&input_rdfs);
-                FD_SET(STDIN_FILENO, &input_rdfs);
-
-                // Create timeout struct
-                struct timeval timeout;
-                timeout.tv_sec = 10;
-                timeout.tv_usec = 0;
-
-                int result = select(STDIN_FILENO + 1, &input_rdfs, NULL, NULL, &timeout);
-
-                if (result == -1) {
-                    perror("select()");
-                    exit(errno);
-                } else if (result == 0) {
-                    // Timeout : aucune saisie
-                    strcpy(choice, default_choice);
-                    printf("No input received. Defaulting to '%s'.\n", default_choice);
-                } else {
-                    fgets(choice, BUF_SIZE, stdin);
-                    printf("\n");
-                }
-
-                char serverAnswer[3*BUF_SIZE];
-                if (strcmp(parameter, "_") == 0) {
-                    // No parameter
-                    snprintf(serverAnswer, 2*BUF_SIZE, "%s %s", new_command, choice);
-                } else {
-                    // With parameter
-                    snprintf(serverAnswer, 3*BUF_SIZE, "%s %s %s", new_command, parameter, choice);
-                }
-                writeServer(sock, serverAnswer);
+                handleClientInput(sock, buffer);
             }
             else if (strncmp(buffer, "BEGIN_SAVED_GAME", 16) == 0)
             {
@@ -263,6 +221,54 @@ int receiveGameAndSave(SOCKET sock, const char *filename)
     }
 
     fclose(file);
+
+    return 1;
+}
+
+int handleClientInput(SOCKET sock, char *buffer)
+{
+    strtok(buffer, ";"); // skip command
+    char *new_command = strtok(NULL, ";");
+    char *default_choice = strtok(NULL, ";");
+    char *parametersList = strtok(NULL, ";");
+    char *numParams = strtok(NULL, ";");
+    char *message = strtok(NULL, "");
+    if (new_command == NULL || default_choice == NULL || numParams == NULL || message == NULL) {
+        return 0;
+    }
+
+    printf("%s\n", message);
+
+    char choice[BUF_SIZE];
+
+    // Use select to implement a 10-second timeout for user input
+    fd_set input_rdfs;
+    FD_ZERO(&input_rdfs);
+    FD_SET(STDIN_FILENO, &input_rdfs);
+
+    // Create timeout struct
+    struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+
+    int result = select(STDIN_FILENO + 1, &input_rdfs, NULL, NULL, &timeout);
+
+    if (result == -1) {
+        perror("select()");
+        exit(errno);
+    } else if (result == 0) {
+        // Timeout : aucune saisie
+        strcpy(choice, default_choice);
+        printf("No input received. Defaulting to '%s'.\n", default_choice);
+    } else {
+        fgets(choice, BUF_SIZE, stdin);
+        printf("\n");
+    }
+
+    char serverAnswer[3*BUF_SIZE];
+    snprintf(serverAnswer, 2*BUF_SIZE, "%s %s;%s;%s;", new_command, choice, parametersList ? parametersList : "", numParams);
+
+    writeServer(sock, serverAnswer);
 
     return 1;
 }

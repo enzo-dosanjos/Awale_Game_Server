@@ -34,6 +34,7 @@ int readServer(SOCKET sock, char *buffer);
 void writeServer(SOCKET sock, const char *buffer);
 static int endsWithEndMarker(const char *buffer, size_t *posBeforeEnd);
 int receiveGameAndSave(SOCKET sock, const char *filename);
+int handleClientInput(SOCKET sock, char *buffer);
 
 
 #endif // AWALE_GAME_SERVER_CLIENT_H

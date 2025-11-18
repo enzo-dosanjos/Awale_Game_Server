@@ -127,11 +127,11 @@ if (!client->gameId)
     if (isGameOver(&gameSession->game))
     {
         // Ask the players if they want to save the game, then handle endgame
-        char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
         for (int i = 0; i < NUM_PLAYERS; i++)
         {
-            writeClient(gameSession->players[i]->sock, saveMsg);
+            askClientInput(gameSession->players[i]->sock, "HIDDEN_HANDLEENDGAME", "N", NULL, 0, "The game has ended. Do you want to save the game? (Y/N): ");
         }
+        gameSession->endGame = NUM_PLAYERS;
     }
 
     return 1;
@@ -155,32 +155,30 @@ int game_suggestEnd(Client *client,
 
     if (gameSession->players[0] == client)
     {
-        if (gameSession->endGameSuggested == 1)
+        if (gameSession->endGame == 1)
         {
             // Ask the players if they want to save the game, then handle endgame
-            char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
             for (int i = 0; i < NUM_PLAYERS; i++)
             {
-                writeClient(gameSession->players[i]->sock, saveMsg);
+                askClientInput(gameSession->players[i]->sock, "HIDDEN_HANDLEENDGAME", "N", NULL, 0, "The game has ended. Do you want to save the game? (Y/N): ");
             }
         }
-        gameSession->endGameSuggested = 0;
+        gameSession->endGame = 0;
     }
     else if (gameSession->players[1] == client)
     {
-        if (gameSession->endGameSuggested == 0)
+        if (gameSession->endGame == 0)
         {
             // Ask the players if they want to save the game, then handle endgame
-            char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
             for (int i = 0; i < NUM_PLAYERS; i++)
             {
-                writeClient(gameSession->players[i]->sock, saveMsg);
+                askClientInput(gameSession->players[i]->sock, "HIDDEN_HANDLEENDGAME", "N", NULL, 0, "The game has ended. Do you want to save the game? (Y/N): ");
             }
         }
-        gameSession->endGameSuggested = 1;
+        gameSession->endGame = 1;
     }
 
-    Client *opponent = gameSession->players[nextPlayer(gameSession->endGameSuggested, &gameSession->game)];
+    Client *opponent = gameSession->players[nextPlayer(gameSession->endGame, &gameSession->game)];
     writeClient(opponent->sock, "The opponent suggests ending this game. ACCEPTEND?\n");
 
     return 1;
@@ -202,13 +200,14 @@ int game_acceptEnd(Client *client,
         return 0;
     }
 
-    if (gameSession->players[!gameSession->endGameSuggested] == client)
+    if (gameSession->players[!gameSession->endGame] == client)
     {
+        gameSession->endGame = NUM_PLAYERS;
+        
         // Ask the players if they want to save the game, then handle endgame
-        char saveMsg[] = "CLIENT_INPUT HIDDEN_HANDLEENDGAME N _ The game has ended. Do you want to save the game? (Y/N): ";
         for (int i = 0; i < NUM_PLAYERS; i++)
         {
-            writeClient(gameSession->players[i]->sock, saveMsg);
+            askClientInput(gameSession->players[i]->sock, "HIDDEN_HANDLEENDGAME", "N", NULL, 0, "The game has ended. Do you want to save the game? (Y/N): ");
         }
 
         return 1;
@@ -266,13 +265,26 @@ void game_handleEndForPlayer(Client *client,
         i++;
     client->stats.totalSeedsCollected += gameSession->game.scores[i];
 
-    gameSession->saveAnswered++;
+    gameSession->saveAnswered[i]++;
 
-    if (gameSession->saveAnswered == NUM_PLAYERS) {
-        removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
-        removeGameSession(gameSessions, numGames, gameSession->id);
-        freeGame(&gameSession->game);
+    game_freeGameSession(gameSessions, numGames, activeGameSessions, numActiveGames, gameSession);
+}
+
+void game_freeGameSession(GameSession *gameSessions, int *numGames,
+                         GameSession **activeGameSessions, int *numActiveGames,
+                         GameSession *gameSession)
+// Frees the game session if all players have answered the save prompt.
+// Errors : none
+{
+    for (int i = 0; i < NUM_PLAYERS; i++) {
+        if (!gameSession->saveAnswered[i]) {
+            return;
+        }
     }
+
+    removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
+    removeGameSession(gameSessions, numGames, gameSession->id);
+    freeGame(&gameSession->game);
 }
 
 int game_loadLast(Client **connectedClients, int actualConnected,

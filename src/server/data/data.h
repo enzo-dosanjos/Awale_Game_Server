@@ -67,8 +67,8 @@ typedef struct
     int currentPlayer;
     int numMoves;
     // endgame
-    int endGameSuggested;
-    int saveAnswered;
+    int endGame;
+    int saveAnswered[NUM_PLAYERS];
     // viewers
     int numViewers;
     Client *viewers[MAX_VIEWERS];

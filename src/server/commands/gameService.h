@@ -32,6 +32,10 @@ void game_handleEndForPlayer(Client *client,
                              GameSession *gameSessions, int *numGames,
                              int saveFlag);
 
+void game_freeGameSession(GameSession *gameSessions, int *numGames,
+                         GameSession **activeGameSessions, int *numActiveGames,
+                         GameSession *gameSession);
+
 // Load / save games
 int game_loadLast(Client **connectedClients, int actualConnected,
                   Client *client,

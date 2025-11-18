@@ -118,25 +118,48 @@ int account_quit(Client **connectedClients, int *actualConnected,
 // Handles the disconnection of a client, including game termination if the client is in a game.
 // Errors : none
 {
+    int allSaved = 0;
+
     // If the client is in a game, handle game termination
     if (client->gameId != NULL)
     {
         GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
+
         if (gameSession != NULL)
         {
-            // Notify the opponent
-            for (int i = 0; i < NUM_PLAYERS; i++)
+            if (gameSession->endGame == -1)
             {
-                if (gameSession->players[i] != client)
+                // Notify the opponent
+                for (int i = 0; i < NUM_PLAYERS; i++)
                 {
-                    char msg[2 * BUF_SIZE];
-                    snprintf(msg, 2 * BUF_SIZE, "The opponent %s has disconnected. The game has been saved.\n", client->username);
-                    writeClient(gameSession->players[i]->sock, msg);
-                    gameSession->players[i]->gameId = NULL;
+                    if (gameSession->players[i] != client)
+                    {
+                        char msg[2 * BUF_SIZE];
+                        snprintf(msg, 2 * BUF_SIZE, "The opponent %s has disconnected. The game has been saved.\n", client->username);
+                        writeClient(gameSession->players[i]->sock, msg);
+                        gameSession->players[i]->gameId = NULL;
+                    }
+                }
+
+                removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
+            }
+            else if (gameSession->endGame == NUM_PLAYERS)
+            {
+                allSaved = 1;
+
+                for (int i = 0; i < NUM_PLAYERS; i++)
+                {
+                    
+                    if (gameSession->players[i] == client)
+                    {
+                        gameSession->saveAnswered[i] = 1;
+                    }
+                    else if (!gameSession->saveAnswered[i])
+                    {
+                        allSaved = 0;
+                    }
                 }
             }
-
-            removeActiveGameSession(activeGameSessions, numActiveGames, gameSession->id);
         }
 
         client->gameId = NULL;
@@ -154,5 +177,9 @@ int account_quit(Client **connectedClients, int *actualConnected,
 
     sendMessageToAllClients(connectedClients, *actualConnected, client->username, buffer, 1);
 
+    if (allSaved)
+    {
+        return -1;
+    }
     return 1;
 }

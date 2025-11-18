@@ -18,7 +18,12 @@ void processClientCommand(char *buffer, Client *client, Client *clients,
     /* client disconnected */
     if (c == 0)
     {
-      account_quit(connectedClients, actualConnected, client, activeGameSessions, numActiveGames);
+        GameSession *gameSession = findGameSessionByClient(client, activeGameSessions, *numActiveGames);
+
+        if (account_quit(connectedClients, actualConnected, client, activeGameSessions, numActiveGames) == -1)
+        {
+            game_freeGameSession(gameSessions, numGames, activeGameSessions, numActiveGames, gameSession);
+        }
     }
     else
     {
@@ -49,8 +54,13 @@ void processClientCommand(char *buffer, Client *client, Client *clients,
         }
         else if (strcmp(command, "HIDDEN_STARTGAME") == 0)
         {
-            char *username = strtok(NULL, " ");
-            char *rotationStr = strtok(NULL, "");
+            char *rotationStr = strtok(NULL, ";");
+            char *numParamsStr = strtok(NULL, ";");
+            if (atoi(numParamsStr) < 1)
+            {
+                return;
+            }
+            char *username = strtok(NULL, ";");
             int rotation = atoi(rotationStr);
 
             game_start(client, connectedClients, *actualConnected, username, gameSessions, numGames, activeGameSessions, numActiveGames, rotation);
@@ -126,7 +136,7 @@ void processClientCommand(char *buffer, Client *client, Client *clients,
         }
         else if (strcmp(command, "HIDDEN_HANDLEENDGAME") == 0)
         {
-            char *flag = strtok(NULL, "");
+            char *flag = strtok(NULL, ";");
             if (flag == NULL)
             {
                 char msg[] = "An error occurred while handling your request, the game could not be saved.\n";
@@ -189,9 +199,9 @@ void processClientCommand(char *buffer, Client *client, Client *clients,
             char *username = strtok(NULL, " ");
             if (username == NULL)
             {
-              char msg[] = "Error: No username provided to remove from friends. Use: REMOVEFRIEND <username>\n";
-              writeClient(client->sock, msg);
-              return;
+                char msg[] = "Error: No username provided to remove from friends. Use: REMOVEFRIEND <username>\n";
+                writeClient(client->sock, msg);
+                return;
             }
 
             profile_removeFriend(client, username);

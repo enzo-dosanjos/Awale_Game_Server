@@ -34,6 +34,9 @@ int readClient(SOCKET sock, char *buffer);
 
 void writeClient(SOCKET sock, const char *buffer);
 
+void askClientInput(SOCKET sock, char *command, char* defaultValue,
+                    char *parametersList, char *numParams, char *message);
+
 // Messaging
 void sendMessageToAllClients(Client **connectedClients, int actualConnected,
                              char sender[], const char *buffer,
